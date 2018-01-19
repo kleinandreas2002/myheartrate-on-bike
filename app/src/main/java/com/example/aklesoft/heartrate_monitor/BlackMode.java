@@ -576,7 +576,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             Log.i(TAG, "BTS Callback action: " + action);
 
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                tHRView.setText("Connected...");
+                tHRView.setText("Connect...");
                 //ToDo
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
 //                setActivityState(MODE_DISCONNECTED);

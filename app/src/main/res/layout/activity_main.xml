@@ -71,6 +71,15 @@
             android:textStyle="bold" />
 
         <ToggleButton
+            android:id="@+id/SettingTimerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="SettingTimerOnClick"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textOff="Show Timer - OFF"
+            android:textOn="Show Timer - ON" />
+
+        <ToggleButton
             android:id="@+id/SettingSpeedView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -88,15 +97,6 @@
             android:textColor="@color/cast_expanded_controller_background_color"
             android:textOff="Show HR - OFF"
             android:textOn="Show HR - ON" />
-
-        <ToggleButton
-            android:id="@+id/SettingTimerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="SettingTimerOnClick"
-            android:textColor="@color/cast_expanded_controller_background_color"
-            android:textOff="Show Timer - OFF"
-            android:textOn="Show Timer - ON" />
 
         <ToggleButton
             android:id="@+id/SettingClockView"

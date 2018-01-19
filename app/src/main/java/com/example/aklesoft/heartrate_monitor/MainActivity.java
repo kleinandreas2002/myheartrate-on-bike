@@ -131,15 +131,15 @@ public class MainActivity extends AppCompatActivity{
         mDeviceAddress = pref.getString("deviceAddress", null);
         mDeviceName = pref.getString("deviceName", null);
 
-        this.ShowSpeed = pref.getBoolean("ShowSpeed", false);
-        this.ShowHR = pref.getBoolean("ShowHR", false);
-        this.ShowClock = pref.getBoolean("ShowClock", false);
-        this.ShowTimer = pref.getBoolean("ShowTimer", false);
+        ShowSpeed = pref.getBoolean("ShowSpeed", false);
+        ShowHR = pref.getBoolean("ShowHR", false);
+        ShowClock = pref.getBoolean("ShowClock", false);
+        ShowTimer = pref.getBoolean("ShowTimer", false);
 
-        SettingSpeedView.setChecked(this.ShowSpeed);
-        SettingHRView.setChecked(this.ShowHR);
-        SettingClockView.setChecked(this.ShowClock);
-        SettingTimerView.setChecked(this.ShowTimer);
+        SettingSpeedView.setChecked(ShowSpeed);
+        SettingHRView.setChecked(ShowHR);
+        SettingClockView.setChecked(ShowClock);
+        SettingTimerView.setChecked(ShowTimer);
 
         Initialize_BTLE();
 
@@ -293,8 +293,8 @@ public class MainActivity extends AppCompatActivity{
                 mBluetoothAdapter.startLeScan(mLeScanCallback);
             } else {
                 Log.i(TAG, "Connect to stored device: " + mDeviceAddress);
-                setHRStatus("Connect to stored device: " + mDeviceAddress);
-                setHRDevice("HR Device: "+mDeviceName);
+                setHRStatus("Connect to " + mDeviceAddress);
+                setHRDevice(mDeviceName);
 
             }
         } else {
@@ -355,18 +355,17 @@ public class MainActivity extends AppCompatActivity{
                 }
 
                 Log.i(TAG, "HRM: " + intent.getStringExtra(mBluetoothLeService.EXTRA_DATA));
-//                updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+                setHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
 
             }
 
         }
     };
-//    public void updateHrValue(int hrData) {
-//        this.HRStartData = hrData;
-//
-//        tHR_Data.setText("HR Data: "+ Integer.toString(hrData) );
-//
-//    }
+    public void setHrValue(int hrData) {
+        this.HRStartData = hrData;
+
+        tHR_Data.setText("HR Data: "+ Integer.toString(hrData) );
+    }
 
 
     private static IntentFilter makeGattUpdateIntentFilter() {
@@ -404,26 +403,33 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e(TAG, "Resume -> scanForHRM");
 
-        scanForHRM(true);
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+        if(ShowHR) {
+            Log.e(TAG, "Resume -> scanForHRM");
+
+            scanForHRM(true);
+            registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+        }
     }
 
     @Override
     protected void onPause(){
         super.onPause();
-        scanForHRM(false);
-        unregisterReceiver(mGattUpdateReceiver);
+        if(ShowHR) {
+            scanForHRM(false);
+            unregisterReceiver(mGattUpdateReceiver);
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
 
-        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        startService(gattServiceIntent);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        if(ShowHR) {
+            Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+            startService(gattServiceIntent);
+            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        }
     }
 
     @Override
@@ -445,9 +451,9 @@ public class MainActivity extends AppCompatActivity{
         if (tipWindow != null && tipWindow.isTooltipShown())
             tipWindow.dismissTooltip();
 
-        unbindService(mServiceConnection);
-// unbindService(mServiceConnection);
-// unregisterReceiver(mGattUpdateReceiver);
+        if(ShowHR) {
+            unbindService(mServiceConnection);
+        }
 
     }
 
@@ -529,7 +535,8 @@ public class MainActivity extends AppCompatActivity{
     public void SettingHrOnClick (View view){
 //ToDo
         this.ShowHR = !this.ShowHR;
-
+        scanForHRM(true);
+        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
     }
 
     ////////////////////////////////////////
