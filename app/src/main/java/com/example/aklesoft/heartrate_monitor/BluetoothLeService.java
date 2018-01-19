@@ -207,13 +207,12 @@ public class BluetoothLeService extends Service {
      *
      * @param address The device address of the destination device.
      *
-     * @param mainActivity
      * @return Return true if the connection is initiated successfully. The connection result
      *         is reported asynchronously through the
      *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      *         callback.
      */
-    public boolean connect(final String address, MainActivity mainActivity) {
+    public boolean connect(final String address) {
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
             return false;

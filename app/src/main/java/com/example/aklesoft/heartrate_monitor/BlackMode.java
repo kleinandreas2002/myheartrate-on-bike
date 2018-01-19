@@ -3,9 +3,22 @@ package com.example.aklesoft.heartrate_monitor;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.location.Criteria;
@@ -14,10 +27,12 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.Window;
@@ -25,12 +40,15 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Places;
+
+import java.util.UUID;
 
 
 /**
@@ -40,6 +58,9 @@ import com.google.android.gms.location.places.Places;
 public class BlackMode extends Activity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
+
+    private final static String TAG = BlackMode.class.getSimpleName();
+
 
     private GoogleApiClient client;
     private LocationManager locationManager;
@@ -59,11 +80,30 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     private Thread refreshTimerThread;
 
-
     private boolean timerrunning;
     private boolean blocationManager;
-
     int time = 0;
+
+    boolean bShowSpeed;
+    boolean bShowHR;
+    boolean bShowClock;
+    boolean bShowTimer;
+
+//  BlueTooth
+    BluetoothAdapter mBluetoothAdapter;
+    private BluetoothLeService mBluetoothLeService;
+    public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
+
+    private String HR_DeviceAddress;
+    private String HR_DeviceName;
+
+    public static final int MODE_DISCONNECTED = 0;
+    public static final int MODE_CONNECTING = 1;
+    public static final int MODE_CONNECTED = 2;
+    public static final int MODE_SERVICE_DISCOVERED = 3;
+    public int state = MODE_DISCONNECTED;
+
+
 
 
     /** Called when the activity is first created. */
@@ -101,10 +141,14 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             }
         }
 
-        boolean bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed");
-        boolean bShowHR = getIntent().getExtras().getBoolean("ShowHR");
-        boolean bShowClock = getIntent().getExtras().getBoolean("ShowClock");
-        boolean bShowTimer = getIntent().getExtras().getBoolean("ShowTimer");
+        bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed");
+        bShowHR = getIntent().getExtras().getBoolean("ShowHR");
+        bShowClock = getIntent().getExtras().getBoolean("ShowClock");
+        bShowTimer = getIntent().getExtras().getBoolean("ShowTimer");
+        HR_DeviceName = getIntent().getExtras().getString("HR_DeviceName");
+        HR_DeviceAddress = getIntent().getExtras().getString("HR_DeviceAddress");
+
+
 
         tSpeedView = (TextView) this.findViewById(R.id.SpeedView);
         tHRView = (TextView) this.findViewById(R.id.HRView);
@@ -152,10 +196,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
             Location location = locationManager.getLastKnownLocation(provider);
 
-
-
-
             onLocationChanged(location);
+
         }
         else
         {
@@ -163,6 +205,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
         if(bShowHR) {
             tHRView.setVisibility(View.VISIBLE);
+            initBt();
+
         }
         else
         {
@@ -206,6 +250,31 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //            }
 //        };
 //        threadMoveText.start();
+    }
+
+    private boolean initBt() {
+
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Toast.makeText(this, "Bluetooth not found", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+
+        mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(this, "LE Bluetooth not supported", Toast.LENGTH_SHORT);
+            return false;
+        }
+
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, 1);
+        }
+
+        return true;
+
     }
 
     private void moveSpeedTextView() {
@@ -312,6 +381,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             locationManager.requestLocationUpdates(provider, 1, 0, this);
         }
 
+        if(bShowHR) {
+            registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+            scanForHRM(true);
+        }
+
+
     }
 
     @Override
@@ -321,6 +396,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             locationManager.removeUpdates(this);
         }
 
+        if(bShowHR) {
+            unregisterReceiver(mGattUpdateReceiver);
+        }
     }
 
     @Override
@@ -333,6 +411,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             client.connect();
         }
 //        this.onLocationChanged(null);
+        if(bShowHR) {
+            Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+            startService(gattServiceIntent);
+            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        }
     }
 
     @Override
@@ -345,6 +428,202 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //        client.disconnect();
     }
 
+    private void scanForHRM(final boolean enable) {
+
+        if (enable) {
+
+            if (HR_DeviceAddress == null) {
+
+                mBluetoothAdapter.startLeScan(mLeScanCallback);
+            } else {
+                Log.i(TAG, "Connect to stored device: " + HR_DeviceAddress);
+                connectDevice();
+            }
+        } else {
+
+            // mScanning = false;
+            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            if (mBluetoothLeService != null) {
+                mBluetoothLeService.disconnect();
+                mBluetoothLeService.close();
+            }
+        }
+    }
+
+    private void connectDevice() {
+        if (mBluetoothLeService != null) {
+
+            final boolean result = mBluetoothLeService.connect(HR_DeviceAddress);
+            Log.d(TAG, "Connect request result=" + result);
+        }
+    }
+
+    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+        @Override
+        public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TAG, "Device Found: " + device.getName() + " / " + device.getAddress());
+
+                    // async call to check for HRM interface
+                    checkForHrmService(device.getAddress());
+//                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+
+                }
+            });
+
+        }
+    };
+
+    private void checkForHrmService(String address) {
+        Log.i(TAG, "ASYCN CHECK FOR HRM SERVICE");
+
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+
+        BluetoothGatt mBluetoothGatt = device.connectGatt(this, false, new BluetoothGattCallback() {
+
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                super.onConnectionStateChange(gatt, status, newState);
+                Log.i(TAG, "LOCAL BT SERVICE STATE CHANGE: " + newState);
+
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    if (gatt != null) {
+                        Log.i(TAG, "Connected to GATT Server");
+                        Log.i(TAG, "Attempting to start service discovery: " + gatt.discoverServices());
+                    }
+
+                }
+
+            }
+
+            @Override
+            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                super.onServicesDiscovered(gatt, status);
+
+                Log.i(TAG, "Asyn gatt discovered!!");
+
+                for (BluetoothGattService gattService : gatt.getServices()) {
+
+                    for(BluetoothGattCharacteristic gattCharacteristic : gattService.getCharacteristics()) {
+                        if (UUID_HEART_RATE_MEASUREMENT.equals(gattCharacteristic.getUuid())) {
+                            Log.i(TAG, "HRM service found!!");
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    HR_DeviceAddress = device.getAddress();
+                                    HR_DeviceName = device.getName();
+                                    saveDevice(device);
+                                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                                    connectDevice();
+
+                                }
+                            });
+                        }
+
+                    }
+
+                }
+
+            }
+        });
+
+        mBluetoothGatt.connect();
+    }
+
+    private void saveDevice(BluetoothDevice device) {
+        SharedPreferences settings = getSharedPreferences("Heartrate_Monitor", 0);
+        SharedPreferences.Editor editor = settings.edit();
+
+        editor.putString("deviceAddress", device.getAddress());
+        editor.putString("deviceName", device.getName());
+
+        editor.commit();
+    }
+
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+
+            if (mBluetoothLeService.isRunning) {
+//                switchConnection.setChecked(true);
+//                labelStatus.setText("Reading Heart Rate");
+//                labelValue.setText("...");
+            }
+            if (!mBluetoothLeService.initialize()) {
+                Log.e(TAG, "Unable to initialize Bluetooth");
+                finish();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBluetoothLeService = null;
+        }
+    };
+
+    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            final String action = intent.getAction();
+
+            Log.i(TAG, "BTS Callback action: " + action);
+
+            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+                tHRView.setText("Connected...");
+                //ToDo
+            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+//                setActivityState(MODE_DISCONNECTED);
+                //ToDo
+            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                //ToDo
+                if (mBluetoothLeService != null) {
+                    tHRView.setText("... wait for bpm");
+                    mBluetoothLeService.turnHRMNotification();
+//                    setActivityState(MODE_SERVICE_DISCOVERED);
+                }
+
+            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                if (state != MODE_CONNECTED) {
+//                    setActivityState(MODE_CONNECTED);
+                }
+
+                Log.i(TAG, "HRM: " + intent.getStringExtra(mBluetoothLeService.EXTRA_DATA));
+                setHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+
+//                viewProgress.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+//                viewGauge.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+//                viewChart.invalidate();
+
+                //ToDo
+            }
+
+        }
+    };
+
+
+    public void setHrValue(int hrData) {
+        tHRView.setText(Integer.toString(hrData) );
+    }
+
+    private static IntentFilter makeGattUpdateIntentFilter() {
+
+        final IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+
+        return intentFilter;
+
+    }
 
     @Override
     public void onLocationChanged(Location location) {
@@ -461,6 +740,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             client.disconnect();
         }
 
+        if(bShowHR) {
+            unbindService(mServiceConnection);
+        }
     }
 
 }
