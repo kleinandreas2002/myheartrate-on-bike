@@ -28,6 +28,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -74,8 +75,13 @@ public class MainActivity extends AppCompatActivity{
     public static String HR_DeviceAddress;
     public static String HR_DeviceName;
 
+//  LinearLayout
+    private LinearLayout MainView;
+    TooltipWindow tipWindow;
+    private float[] lastTouchDownXY = new float[2];
 
-//  ToggleButtons
+
+    //  ToggleButtons
     private ToggleButton SettingSpeedView;
     private ToggleButton SettingHRView;
     private ToggleButton SettingClockView;
@@ -143,6 +149,39 @@ public class MainActivity extends AppCompatActivity{
 
         Initialize_BTLE();
 
+        tipWindow = new TooltipWindow(MainActivity.this);
+        MainView = (LinearLayout) findViewById(R.id.MainView);
+//        MainView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Toast.makeText(MainActivity.this, "Swipe To Right To Start BlackMode", Toast.LENGTH_SHORT).show();
+//                if (!tipWindow.isTooltipShown())
+//                    tipWindow.showToolTip(v);
+//            }
+//        });
+        MainView.setOnTouchListener(new OnSwipeTouchListener(MainActivity.this) {
+            public void onSwipeTop() {
+//                Toast.makeText(MainActivity.this, "top", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "Swipe To Right To Start BlackMode", Toast.LENGTH_SHORT).show();
+                tipWindow.showToolTip(MainView);
+            }
+            public void onSwipeRight() {
+                finish();
+            }
+            public void onSwipeLeft() {
+//                Toast.makeText(MainActivity.this, "left", Toast.LENGTH_SHORT).show();
+                GoToBlackMode();
+            }
+            public void onSwipeBottom() {
+//                Toast.makeText(MainActivity.this, "bottom", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "Swipe To Right To Start BlackMode", Toast.LENGTH_SHORT).show();
+                tipWindow.showToolTip(MainView);
+            }
+//            public boolean onTouch(View v, MotionEvent event) {
+//                tipWindow.showToolTip(v);
+//                return true;
+//            }
+        });
 
     }
 
@@ -483,8 +522,8 @@ public class MainActivity extends AppCompatActivity{
 
 ////////////////////////////////////////
 //  Set button for Blackmode
-    public void GoToBlackMode(View view) {
-        Intent myIntent = new Intent(view.getContext(), BlackMode.class);
+    public void GoToBlackMode() {
+        Intent myIntent = new Intent(getApplicationContext(), BlackMode.class);
         myIntent.putExtra("ShowSpeed", this.ShowSpeed);
         myIntent.putExtra("ShowHR", this.ShowHR);
         myIntent.putExtra("ShowTimer", this.ShowTimer);
@@ -532,8 +571,15 @@ public class MainActivity extends AppCompatActivity{
     public void onDestroy() {
         super.onDestroy();
 
-        unbindService(mServiceConnection);
-        unregisterReceiver(mGattUpdateReceiver);
+        if (tipWindow != null && tipWindow.isTooltipShown())
+            tipWindow.dismissTooltip();
+
+        if( mServiceStatus != null ){
+            unregisterReceiver(mGattUpdateReceiver);
+            unbindService(mServiceConnection);
+        }
+// unbindService(mServiceConnection);
+// unregisterReceiver(mGattUpdateReceiver);
 
     }
 

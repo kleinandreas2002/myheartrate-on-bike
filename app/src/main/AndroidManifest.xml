@@ -56,7 +56,6 @@
             android:name=".BluetoothLeService"
             android:exported="false" />
 
-        <receiver android:name=".BlackMode" />
     </application>
 
 </manifest>

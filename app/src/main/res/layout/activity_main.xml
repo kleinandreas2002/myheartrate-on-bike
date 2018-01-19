@@ -11,10 +11,12 @@
     tools:context="com.example.aklesoft.heartrate_monitor.MainActivity">
 
     <LinearLayout
+        android:id="@+id/MainView"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:clickable="true">
 
         <TextView
             android:id="@+id/GPS_Status"
@@ -53,12 +55,12 @@
             android:textColor="@color/cast_expanded_controller_background_color"
             android:id="@+id/HR_Data" />
 
-        <Button
-            android:id="@+id/button_blackmode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="GoToBlackMode"
-            android:text="Go to Black Mode" />
+        <!--<Button-->
+            <!--android:id="@+id/button_blackmode"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:onClick="GoToBlackMode"-->
+            <!--android:text="Go to Black Mode" />-->
 
         <TextView
             android:layout_width="match_parent"
