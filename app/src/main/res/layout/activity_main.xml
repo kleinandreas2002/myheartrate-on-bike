@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.aklesoft.heartrate_monitor.MainActivity">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true">
+
+        <TextView
+            android:id="@+id/GPS_Status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="GPS Status: "
+            android:textColor="@color/cast_expanded_controller_background_color" />
+
+        <TextView
+            android:text="BT Status: "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:id="@+id/BT_Status" />
+
+        <TextView
+            android:text="HR Device: "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:id="@+id/HR_Device" />
+
+        <TextView
+            android:text="HR Status: "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:id="@+id/HR_Status" />
+
+
+
+        <TextView
+            android:text="HR Data: "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:id="@+id/HR_Data" />
+
+        <Button
+            android:id="@+id/button_blackmode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="GoToBlackMode"
+            android:text="Go to Black Mode" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ToggleButton
+            android:id="@+id/SettingSpeedView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:onClick="SettingSpeedOnClick"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textOff="Show Speed - OFF"
+            android:textOn="Show Speed - ON" />
+
+        <ToggleButton
+            android:id="@+id/SettingHRView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="SettingHrOnClick"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textOff="Show HR - OFF"
+            android:textOn="Show HR - ON" />
+
+        <ToggleButton
+            android:id="@+id/SettingTimerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="SettingTimerOnClick"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textOff="Show Timer - OFF"
+            android:textOn="Show Timer - ON" />
+
+        <ToggleButton
+            android:id="@+id/SettingClockView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="SettingClockOnClick"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textOff="Show Clock - OFF"
+            android:textOn="Show Clock - ON" />
+
+        <!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+            <!--android:orientation="vertical"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content">-->
+            <!--<TextView android:id="@+id/device_name"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textSize="24dp"/>-->
+            <!--<TextView android:id="@+id/device_address"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textSize="12dp"/>-->
+        <!--</LinearLayout>-->
+
+
+    </LinearLayout>
+
+</RelativeLayout>
