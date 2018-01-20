@@ -540,7 +540,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
     ////////////////////////////////////////
-    public void SettingTimerOnClick(View view) {
+    public void SettingStopwatchOnClick(View view) {
 //ToDo
         this.ShowTimer = !this.ShowTimer;
 
@@ -552,6 +552,5 @@ public class MainActivity extends AppCompatActivity{
         this.ShowClock = !this.ShowClock;
 
     }
-
 
 }

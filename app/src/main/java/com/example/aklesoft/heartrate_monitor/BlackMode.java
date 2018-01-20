@@ -72,17 +72,13 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     private Location pCurrentLocation;
     private Location mLastLocation;
-    private Thread workthread;
     private Point displaySize;
     private boolean directionDownTextView = true;
-    private Thread threadMoveText;
+//    private Thread threadMoveText;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
-    private Thread refreshTimerThread;
 
-    private boolean timerrunning;
     private boolean blocationManager;
-    int time = 0;
 
     boolean bShowSpeed;
     boolean bShowHR;
@@ -416,6 +412,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             startService(gattServiceIntent);
             bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         }
+
+
     }
 
     @Override
@@ -426,6 +424,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         // See https://g.co/AppIndexing/AndroidStudio for more information.
 
 //        client.disconnect();
+
     }
 
     private void scanForHRM(final boolean enable) {
@@ -688,54 +687,16 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     }
 
-    public void StartTimer(View view) {
-        if (!timerrunning) {
-            timerrunning = true;
-            initTimer();
-
-        } else {
-            timerrunning = false;
-            refreshTimerThread.interrupt();
-            refreshTimerThread = null;
-        }
-
-    }
-
-    public void initTimer() {
-        refreshTimerThread = new Thread(new Runnable() {
-            public void run() {
-                while (timerrunning) {
-                    time = time + 1;
-                    try {
-                            Thread.sleep(1000);
-                    } catch (InterruptedException ex) {
-//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            tTimerView.setText( String.format("%02d:%02d:%02d", (time / 3600),((time % 3600) / 60), (time % 60) ) );
-//                            tTimerView.setText( String.format(getString(R.string.timer_value),"%d:%d:%d", time / 3600,(time % 3600) / 60, (time % 60)));
-                        }
-                    });
-
-                }
-            }
-        });
-        refreshTimerThread.start();
-    }
 
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(threadMoveText != null) {
-            threadMoveText.interrupt();
-            threadMoveText = null;
-        }
-        if(refreshTimerThread != null) {
-            refreshTimerThread.interrupt();
-            refreshTimerThread = null;
-        }
+//        if(threadMoveText != null) {
+//            threadMoveText.interrupt();
+//            threadMoveText = null;
+//        }
+
         if(client != null){
             client.disconnect();
         }
