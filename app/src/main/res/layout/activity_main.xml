@@ -54,7 +54,8 @@
                     android:id="@+id/cbStopwatch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/cbStopwatch" />
+                    android:text="@string/cbStopwatch"
+                    android:theme="@style/MyCheckBoxes"/>
 
             </LinearLayout>
 

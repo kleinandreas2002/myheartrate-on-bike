@@ -88,7 +88,6 @@ public class MainActivity extends AppCompatActivity{
 //  save settings
     SharedPreferences pref;
     SharedPreferences.Editor editor;
-    public static final String PREFS_NAME = "HRMPreferencesFile";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
