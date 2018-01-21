@@ -19,42 +19,6 @@
         android:layout_alignParentBottom="true"
         android:clickable="true">
 
-        <TextView
-            android:id="@+id/GPS_Status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="GPS Status: "
-            android:textColor="@color/cast_expanded_controller_background_color" />
-
-        <TextView
-            android:text="BT Status: "
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/cast_expanded_controller_background_color"
-            android:id="@+id/BT_Status" />
-
-        <TextView
-            android:text="HR Device: "
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/cast_expanded_controller_background_color"
-            android:id="@+id/HR_Device" />
-
-        <TextView
-            android:text="HR Status: "
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/cast_expanded_controller_background_color"
-            android:id="@+id/HR_Status" />
-
-
-
-        <TextView
-            android:text="HR Data: "
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/cast_expanded_controller_background_color"
-            android:id="@+id/HR_Data" />
 
         <!--<Button-->
             <!--android:id="@+id/button_blackmode"-->
@@ -63,38 +27,36 @@
             <!--android:onClick="GoToBlackMode"-->
             <!--android:text="Go to Black Mode" />-->
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Settings"
-            android:textColor="@color/cast_expanded_controller_background_color"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/imageButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/big_stopwatch_96dp" />
+            <ToggleButton
+                android:id="@+id/SettingStopWatchView"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/stopwatch_96dp"
+                android:padding="12dp"
+                android:layout_margin="12dp"
+                android:textOff=""
+                android:textOn=""
+                android:onClick="SettingStopwatchOnClick"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
-                <ToggleButton
-                    android:id="@+id/SettingTimerView"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:onClick="SettingStopwatchOnClick"
+                    android:text="Stopwatch"
                     android:textColor="@color/cast_expanded_controller_background_color"
-                    android:textOff="Show Stopwatch - OFF"
-                    android:textOn="Show Stopwatch - ON" />
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
 
                 <CheckBox
                     android:layout_width="match_parent"
@@ -104,69 +66,160 @@
 
         </LinearLayout>
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:visibility="visible" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/imageButton2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/speedometer_96dp" />
 
             <ToggleButton
                 android:id="@+id/SettingSpeedView"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/stopwatch_selector"
+                android:padding="12dp"
+                android:layout_margin="12dp"
+                android:textOff=""
+                android:textOn=""
+                android:onClick="SettingSpeedOnClick"/>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:checked="false"
-                android:onClick="SettingSpeedOnClick"
-                android:textColor="@color/cast_expanded_controller_background_color"
-                android:textOff="Show Speed - OFF"
-                android:textOn="Show Speed - ON" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Speedometer"
+                    android:textColor="@color/cast_expanded_controller_background_color"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
+
+                <TextView
+                    android:id="@+id/GPS_Status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="GPS disconnected"
+                    android:textColor="@color/cast_expanded_controller_background_color" />
+
+            </LinearLayout>
+
         </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:visibility="visible" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/imageButton3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/heart_shape_96dp" />
 
             <ToggleButton
                 android:id="@+id/SettingHRView"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/heart_shape_96dp"
+                android:padding="12dp"
+                android:layout_margin="12dp"
+                android:textOff=""
+                android:textOn=""
+                android:onClick="SettingHrOnClick"/>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:onClick="SettingHrOnClick"
-                android:textColor="@color/cast_expanded_controller_background_color"
-                android:textOff="Show HR - OFF"
-                android:textOn="Show HR - ON" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Heartrate"
+                    android:textColor="@color/cast_expanded_controller_background_color"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
+
+
+
+                <TextView
+                    android:id="@+id/BT_Status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="BT Status: "
+                    android:textColor="@color/cast_expanded_controller_background_color" />
+
+                <TextView
+                    android:id="@+id/HR_Status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="HR Status: "
+                    android:textColor="@color/cast_expanded_controller_background_color" />
+
+                <TextView
+                    android:id="@+id/HR_Device"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="HR Device: "
+                    android:textColor="@color/cast_expanded_controller_background_color" />
+
+                <TextView
+                    android:id="@+id/HR_Data"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="HR Data: "
+                    android:textColor="@color/cast_expanded_controller_background_color" />
+
+            </LinearLayout>
 
         </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:visibility="visible" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/imageButton4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/clock_96dp" />
-
             <ToggleButton
                 android:id="@+id/SettingClockView"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/clock_96dp"
+                android:padding="12dp"
+                android:layout_margin="12dp"
+                android:textOff=""
+                android:textOn=""
+                android:onClick="SettingClockOnClick"/>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:onClick="SettingClockOnClick"
-                android:textColor="@color/cast_expanded_controller_background_color"
-                android:textOff="Show Clock - OFF"
-                android:textOn="Show Clock - ON" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Clock"
+                    android:textColor="@color/cast_expanded_controller_background_color"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 

@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity{
         SettingSpeedView = (ToggleButton) findViewById(R.id.SettingSpeedView);
         SettingHRView = (ToggleButton) findViewById(R.id.SettingHRView);
         SettingClockView = (ToggleButton) findViewById(R.id.SettingClockView);
-        SettingTimerView = (ToggleButton) findViewById(R.id.SettingTimerView);
+        SettingTimerView = (ToggleButton) findViewById(R.id.SettingStopWatchView);
 
         tHR_Status = (TextView) findViewById(R.id.HR_Status);
         tHR_Data = (TextView) findViewById(R.id.HR_Data);
