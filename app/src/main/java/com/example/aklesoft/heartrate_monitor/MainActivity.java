@@ -293,7 +293,7 @@ public class MainActivity extends AppCompatActivity{
                 mBluetoothAdapter.startLeScan(mLeScanCallback);
             } else {
                 Log.i(TAG, "Connect to stored device: " + mDeviceAddress);
-                setHRStatus("Connect to " + mDeviceAddress);
+                setHRStatus("Found stored device " + mDeviceAddress);
                 setHRDevice(mDeviceName);
 
             }
@@ -311,10 +311,12 @@ public class MainActivity extends AppCompatActivity{
     }
 
     public void setHRStatus(String HRStatus) {
-        tHR_Status.setText("HR Status: "+ HRStatus);
+//        tHR_Status.setText("HR Status: "+ HRStatus);
+        tHR_Status.setText(HRStatus);
     }
     public void setHRDevice(String HRDevice) {
-        tHR_Device.setText("HR Device: "+ HRDevice);
+//        tHR_Device.setText("HR Device: "+ HRDevice);
+        tHR_Device.setText(HRDevice);
     }
 
 //    private void connectDevice() {
@@ -361,10 +363,12 @@ public class MainActivity extends AppCompatActivity{
 
         }
     };
+
     public void setHrValue(int hrData) {
         this.HRStartData = hrData;
 
-        tHR_Data.setText("HR Data: "+ Integer.toString(hrData) );
+//        tHR_Data.setText("HR Data: "+ Integer.toString(hrData) );
+        tHR_Data.setText(Integer.toString(hrData) );
     }
 
 

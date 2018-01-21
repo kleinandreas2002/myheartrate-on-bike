@@ -32,12 +32,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
+
             <ToggleButton
                 android:id="@+id/SettingStopWatchView"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:background="@drawable/stopwatch_96dp"
+                android:background="@drawable/stopwatch_selector"
                 android:padding="12dp"
                 android:layout_margin="12dp"
                 android:textOff=""
@@ -61,7 +62,8 @@
                 <CheckBox
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Start Timer on Start" />
+                    android:text="Start Stopwatch automatically" />
+
             </LinearLayout>
 
         </LinearLayout>
@@ -78,10 +80,10 @@
 
             <ToggleButton
                 android:id="@+id/SettingSpeedView"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:background="@drawable/stopwatch_selector"
+                android:background="@drawable/speedometer_selector"
                 android:padding="12dp"
                 android:layout_margin="12dp"
                 android:textOff=""
@@ -123,17 +125,36 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <ToggleButton
-                android:id="@+id/SettingHRView"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
-                android:layout_centerInParent="true"
-                android:background="@drawable/heart_shape_96dp"
-                android:padding="12dp"
-                android:layout_margin="12dp"
-                android:textOff=""
-                android:textOn=""
-                android:onClick="SettingHrOnClick"/>
+            <android.support.constraint.ConstraintLayout
+                android:id="@+id/frameLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp">
+
+                <ToggleButton
+                    android:id="@+id/SettingHRView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/heartshape_selector"
+                    android:onClick="SettingHrOnClick"
+                    android:padding="12dp"
+                    android:textOff=""
+                    android:textOn=""
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/HR_Data"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:text=""
+                    android:textAlignment="center"
+                    android:textColor="@color/cast_expanded_controller_background_color"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+            </android.support.constraint.ConstraintLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -149,35 +170,27 @@
                     android:textStyle="bold"
                     android:layout_marginTop="12dp"/>
 
-
-
                 <TextView
                     android:id="@+id/BT_Status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="BT Status: "
+                    android:text="Bluetooth disabled"
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
                 <TextView
                     android:id="@+id/HR_Status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="HR Status: "
+                    android:text="No Device found"
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
                 <TextView
                     android:id="@+id/HR_Device"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="HR Device: "
+                    android:text=""
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
-                <TextView
-                    android:id="@+id/HR_Data"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="HR Data: "
-                    android:textColor="@color/cast_expanded_controller_background_color" />
 
             </LinearLayout>
 
@@ -195,10 +208,10 @@
 
             <ToggleButton
                 android:id="@+id/SettingClockView"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:background="@drawable/clock_96dp"
+                android:background="@drawable/clock_selector"
                 android:padding="12dp"
                 android:layout_margin="12dp"
                 android:textOff=""
