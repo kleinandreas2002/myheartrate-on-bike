@@ -17,27 +17,18 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentBottom="true"
-        android:clickable="true">
-
-
-        <!--<Button-->
-            <!--android:id="@+id/button_blackmode"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:onClick="GoToBlackMode"-->
-            <!--android:text="Go to Black Mode" />-->
+        android:clickable="true"
+        android:focusable="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-
             <ToggleButton
                 android:id="@+id/SettingStopWatchView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
                 android:background="@drawable/stopwatch_selector"
                 android:padding="12dp"
                 android:layout_margin="12dp"
@@ -53,16 +44,17 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Stopwatch"
+                    android:text="@string/tStopwatch"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:layout_marginTop="12dp"/>
 
                 <CheckBox
+                    android:id="@+id/cbStopwatch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Start Stopwatch automatically" />
+                    android:text="@string/cbStopwatch" />
 
             </LinearLayout>
 
@@ -82,7 +74,6 @@
                 android:id="@+id/SettingSpeedView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
                 android:background="@drawable/speedometer_selector"
                 android:padding="12dp"
                 android:layout_margin="12dp"
@@ -98,7 +89,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Speedometer"
+                    android:text="@string/tSpeedometer"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -108,7 +99,7 @@
                     android:id="@+id/GPS_Status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="GPS disconnected"
+                    android:text="@string/tGPS_Status"
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
             </LinearLayout>
@@ -164,7 +155,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Heartrate"
+                    android:text="@string/tHeartrate"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -174,14 +165,14 @@
                     android:id="@+id/BT_Status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Bluetooth disabled"
+                    android:text="@string/tBT_Status"
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
                 <TextView
                     android:id="@+id/HR_Status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="No Device found"
+                    android:text="@string/tHR_Status"
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
                 <TextView
@@ -210,7 +201,6 @@
                 android:id="@+id/SettingClockView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
                 android:background="@drawable/clock_selector"
                 android:padding="12dp"
                 android:layout_margin="12dp"
@@ -226,7 +216,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Clock"
+                    android:text="@string/tClock"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -235,21 +225,6 @@
             </LinearLayout>
 
         </LinearLayout>
-
-        <!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-            <!--android:orientation="vertical"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content">-->
-            <!--<TextView android:id="@+id/device_name"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:textSize="24dp"/>-->
-            <!--<TextView android:id="@+id/device_address"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:textSize="12dp"/>-->
-        <!--</LinearLayout>-->
-
 
     </LinearLayout>
 

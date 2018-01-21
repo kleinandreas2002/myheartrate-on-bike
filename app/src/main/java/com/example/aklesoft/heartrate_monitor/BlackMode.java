@@ -77,6 +77,10 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //    private Thread threadMoveText;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
+    private Thread refreshTimerThread;
+    private boolean timerrunning;
+    int time = 0;
+
 
     private boolean blocationManager;
 
@@ -687,6 +691,41 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     }
 
+    public void StartTimer(View view) {
+        if (!timerrunning) {
+            timerrunning = true;
+            initTimer();
+
+        } else {
+            timerrunning = false;
+            refreshTimerThread.interrupt();
+            refreshTimerThread = null;
+        }
+
+    }
+
+    public void initTimer() {
+        refreshTimerThread = new Thread(new Runnable() {
+            public void run() {
+                while (timerrunning) {
+                    time = time + 1;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            tTimerView.setText( String.format("%02d:%02d:%02d", (time / 3600),((time % 3600) / 60), (time % 60) ) );
+//                            tTimerView.setText( String.format(getString(R.string.timer_value),"%d:%d:%d", time / 3600,(time % 3600) / 60, (time % 60)));
+                        }
+                    });
+
+                }
+            }
+        });
+        refreshTimerThread.start();
+    }
 
 
     @Override
@@ -696,6 +735,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //            threadMoveText.interrupt();
 //            threadMoveText = null;
 //        }
+
+        if(refreshTimerThread != null) {
+            refreshTimerThread.interrupt();
+            refreshTimerThread = null;
+        }
 
         if(client != null){
             client.disconnect();
