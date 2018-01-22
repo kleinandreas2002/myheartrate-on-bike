@@ -20,6 +20,7 @@ import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -72,6 +73,8 @@ public class MainActivity extends AppCompatActivity{
     TooltipWindow tipWindow;
     private float[] lastTouchDownXY = new float[2];
 
+//  ImageButton
+    private ImageButton ibResetDevice;
 
     //  ToggleButtons
     private ToggleButton SettingSpeedView;
@@ -121,19 +124,25 @@ public class MainActivity extends AppCompatActivity{
         SettingClockView = (ToggleButton) findViewById(R.id.SettingClockView);
         SettingTimerView = (ToggleButton) findViewById(R.id.SettingStopWatchView);
 
+        ibResetDevice = (ImageButton) findViewById(R.id.ResetDevice);
+
         tHR_Status = (TextView) findViewById(R.id.HR_Status);
         tHR_Data = (TextView) findViewById(R.id.HR_Data);
         tHR_Device = (TextView) findViewById(R.id.HR_Device);
 
 //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
-        mDeviceAddress = pref.getString("deviceAddress", null);
-        mDeviceName = pref.getString("deviceName", null);
-
         ShowSpeed = pref.getBoolean("ShowSpeed", false);
         ShowHR = pref.getBoolean("ShowHR", false);
         ShowClock = pref.getBoolean("ShowClock", false);
         ShowTimer = pref.getBoolean("ShowTimer", false);
+
+        mDeviceAddress = pref.getString("deviceAddress", null);
+        mDeviceName = pref.getString("deviceName", null);
+
+        if( mDeviceName != null && mDeviceAddress != null ){
+            ibResetDevice.setVisibility(View.VISIBLE);
+        }
 
         SettingSpeedView.setChecked(ShowSpeed);
         SettingHRView.setChecked(ShowHR);
@@ -522,6 +531,8 @@ public class MainActivity extends AppCompatActivity{
         editor.putString("deviceName", device.getName());
 
         editor.commit();
+
+        ibResetDevice.setVisibility(View.VISIBLE);
     }
 
 
@@ -556,4 +567,15 @@ public class MainActivity extends AppCompatActivity{
 
     }
 
+    public void ResetDevice(View view) {
+        SharedPreferences settings = getSharedPreferences("Heartrate_Monitor", 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("deviceAddress", null);
+        editor.putString("deviceName", null);
+        editor.commit();
+        mDeviceAddress = null;
+        mDeviceName = null;
+        ibResetDevice.setVisibility(View.GONE);
+
+    }
 }

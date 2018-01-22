@@ -33,6 +33,7 @@
     <string name="tHRView">bpm</string>
     <string name="tSpeedometerViewData">--</string>
     <string name="tSpeedometerView">kmh</string>
+    <string name="bResetDevice">Reset Device</string>
 
 
 </resources>
