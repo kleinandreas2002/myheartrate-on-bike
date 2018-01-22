@@ -29,5 +29,10 @@
     <string name="tBT_Status">Bluetooth disabled</string>
     <string name="tHR_Status">No Device found</string>
     <string name="tClock">Clock</string>
+    <string name="tHRViewData">--</string>
+    <string name="tHRView">bpm</string>
+    <string name="tSpeedometerViewData">--</string>
+    <string name="tSpeedometerView">kmh</string>
+
 
 </resources>

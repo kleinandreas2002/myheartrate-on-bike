@@ -485,7 +485,7 @@ public class MainActivity extends AppCompatActivity{
             }
         }
         TextView bt_status = (TextView) findViewById(R.id.BT_Status);
-        bt_status.setText("BT Status: "+stateBluetooth);
+        bt_status.setText(stateBluetooth);
     }
 
 ////////////////////////////////////////

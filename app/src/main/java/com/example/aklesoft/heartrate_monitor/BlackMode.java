@@ -612,7 +612,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
 
     public void setHrValue(int hrData) {
-        tHRView.setText(Integer.toString(hrData) );
+        tHRView.setText(Integer.toString(hrData)+" bpm" );
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
