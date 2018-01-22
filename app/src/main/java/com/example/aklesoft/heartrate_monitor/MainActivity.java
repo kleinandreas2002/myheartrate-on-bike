@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity{
 
         if( mDeviceName != null && mDeviceAddress != null ){
             ibResetDevice.setVisibility(View.VISIBLE);
-            setHRStatus("Found stored device " + mDeviceAddress);
+            setHRStatus("Found stored device");
             setHRDevice(mDeviceName);
         }
 
@@ -452,7 +452,7 @@ public class MainActivity extends AppCompatActivity{
 
             if( mDeviceName != null && mDeviceAddress != null ){
                 ibResetDevice.setVisibility(View.VISIBLE);
-                setHRStatus("Found stored device " + mDeviceAddress);
+                setHRStatus("Found stored device");
                 setHRDevice(mDeviceName);
             }
         }
@@ -569,7 +569,7 @@ public class MainActivity extends AppCompatActivity{
 
         if( device.getAddress() != null && device.getName() != null) {
             ibResetDevice.setVisibility(View.VISIBLE);
-            setHRStatus("Found stored device " + device.getAddress());
+            setHRStatus("Found stored device");
             setHRDevice(device.getName());
         }
 
