@@ -39,6 +39,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -69,6 +70,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private TextView tHRView;
     private TextView tClockView;
     private TextView tTimerView;
+    private LinearLayout lSpeedView;
+    private LinearLayout lHRView;
 
     private Location pCurrentLocation;
     private Location mLastLocation;
@@ -150,13 +153,15 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
 
 
+        lSpeedView = (LinearLayout) this.findViewById(R.id.SpeedViewLayout);
+        lHRView = (LinearLayout) this.findViewById(R.id.HRViewLayout);
         tSpeedView = (TextView) this.findViewById(R.id.SpeedView);
         tHRView = (TextView) this.findViewById(R.id.HRView);
         tClockView = (TextView) this.findViewById(R.id.ClockView);
         tTimerView = (TextView) this.findViewById(R.id.TimerView);
 
         if(bShowSpeed) {
-            tSpeedView.setVisibility(View.VISIBLE);
+            lSpeedView.setVisibility(View.VISIBLE);
 
             client = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -201,16 +206,15 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
         else
         {
-            tSpeedView.setVisibility(View.GONE);
+            lSpeedView.setVisibility(View.GONE);
         }
         if(bShowHR) {
-            tHRView.setVisibility(View.VISIBLE);
+            lHRView.setVisibility(View.VISIBLE);
             initBt();
-
         }
         else
         {
-            tHRView.setVisibility(View.GONE);
+            lHRView.setVisibility(View.GONE);
         }
         if(bShowClock) {
             tClockView.setVisibility(View.VISIBLE);
