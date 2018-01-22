@@ -24,7 +24,7 @@
     <string name="cbStopwatch">Start Stopwatch automatically</string>
     <string name="tStopwatch">Stopwatch</string>
     <string name="tSpeedometer">Speedometer</string>
-    <string name="tGPS_Status">GPS disconnected</string>
+    <string name="tGPS_Status">GPS disabled</string>
     <string name="tHeartrate">Heartrate</string>
     <string name="tBT_Status">Bluetooth disabled</string>
     <string name="tHR_Status">No Device found</string>

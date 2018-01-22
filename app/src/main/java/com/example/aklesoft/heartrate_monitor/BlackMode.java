@@ -70,6 +70,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private TextView tHRView;
     private TextView tClockView;
     private TextView tTimerView;
+    private LinearLayout lHRViewUnit;
     private LinearLayout lSpeedView;
     private LinearLayout lHRView;
 
@@ -94,7 +95,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     boolean bStartStopwatch;
 
 //  BlueTooth
-    private static final int SCAN_PERIOD = 20000;
+    private static final int SCAN_PERIOD = 5000;
     private long mTimestamp = 0;
 
     BluetoothAdapter mBluetoothAdapter;
@@ -160,7 +161,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         HR_DeviceAddress = getIntent().getExtras().getString("HR_DeviceAddress");
 
 
-
+        lHRViewUnit = (LinearLayout) this.findViewById(R.id.LayoutHRViewUnit);
         lSpeedView = (LinearLayout) this.findViewById(R.id.SpeedViewLayout);
         lHRView = (LinearLayout) this.findViewById(R.id.HRViewLayout);
         tSpeedView = (TextView) this.findViewById(R.id.SpeedView);
@@ -169,6 +170,10 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         tTimerView = (TextView) this.findViewById(R.id.TimerView);
 
         if(bShowSpeed) {
+
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            blocationManager = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
             lSpeedView.setVisibility(View.VISIBLE);
 
             client = new GoogleApiClient.Builder(this)
@@ -180,8 +185,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                     .addApi(Places.PLACE_DETECTION_API)
                     .build();
 
-            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            blocationManager = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 // check if enabled and if not send user to the GSP settings
 // Better solution would be to display a dialog and suggesting to
 // go to the settings
@@ -397,7 +400,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
 
         if(bShowHR) {
+            Log.e(TAG, "registerReceiver");
             registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+            Log.e(TAG, "scanForHRM");
             scanForHRM(true);
         }
 
@@ -429,10 +434,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         if(bShowHR) {
             Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
             startService(gattServiceIntent);
+            Log.e(TAG, "bindService");
             bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         }
-
-
     }
 
     @Override
@@ -470,9 +474,10 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     private void connectDevice() {
         if (mBluetoothLeService != null) {
-
+            Log.e(TAG, "Connect to "+HR_DeviceAddress);
             final boolean result = mBluetoothLeService.connect(HR_DeviceAddress);
-            Log.d(TAG, "Connect request result=" + result);
+            Log.e(TAG, "Connect request result=" + result);
+
         }
     }
 
@@ -492,6 +497,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                     if (isTimeAlready(SCAN_PERIOD)) {
                         mBluetoothAdapter.stopLeScan(mLeScanCallback);
                         Log.i(TAG, "Stop BT scan. timeout");
+
                     }
                 }
             });
@@ -523,7 +529,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                         Log.i(TAG, "Connected to GATT Server");
                         Log.i(TAG, "Attempting to start service discovery: " + gatt.discoverServices());
                     }
-
+                }
+                else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.i(TAG, "Disconnected");
+                    scanForHRM(true);
+//                    setHrValue("Disconnected");
                 }
 
             }
@@ -581,6 +591,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
             if (mBluetoothLeService.isRunning) {
 //                switchConnection.setChecked(true);
+                    Log.e(TAG, "Reading Heart Rate");
 //                labelStatus.setText("Reading Heart Rate");
 //                labelValue.setText("...");
             }
@@ -641,6 +652,16 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         tHRView.setText(Integer.toString(hrData));
     }
 
+    public void setHrValue(final String hrData) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tHRView.setText(hrData);
+                lHRViewUnit.setVisibility(getWindow().getDecorView().getRootView().GONE);
+            }
+        });
+    }
+
     private static IntentFilter makeGattUpdateIntentFilter() {
 
         final IntentFilter intentFilter = new IntentFilter();
@@ -660,7 +681,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         if( location == null)
         {
-            tSpeedView.setText("-- kmh");
+            tSpeedView.setText("--");
         }
         else
         {

@@ -208,15 +208,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:background="@color/cast_expanded_controller_ad_container_white_stripe_color"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
                             android:onClick="ResetDevice"
                             android:visibility="gone"
-                            app:srcCompat="@drawable/ic_reset_button" />
+                            app:srcCompat="@drawable/reset_button_selector" />
 
                     </LinearLayout>
 
                 </LinearLayout>
-
 
             </LinearLayout>
 

@@ -1,19 +1,17 @@
 package com.example.aklesoft.heartrate_monitor;
 
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Build;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -59,7 +57,7 @@ public class MainActivity extends AppCompatActivity{
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
-    private static final int SCAN_PERIOD = 20000;
+    private static final int SCAN_PERIOD = 10000;
     private long mTimestamp = 0;
     private boolean mScanning;
 
@@ -70,6 +68,7 @@ public class MainActivity extends AppCompatActivity{
     public static String HR_DeviceAddress;
     public static String HR_DeviceName;
 
+    public static TextView tGPS_Status;
 //  LinearLayout
     private LinearLayout MainView;
     TooltipWindow tipWindow;
@@ -104,24 +103,24 @@ public class MainActivity extends AppCompatActivity{
         setContentView(R.layout.activity_main);
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Android M Permission check
-            if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("This app needs location access");
-                builder.setMessage("Please grant location access so this app can detect beacons.");
-                builder.setPositiveButton(android.R.string.ok, null);
-                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
-                    public void onDismiss(DialogInterface dialog) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            requestPermissions(new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
-                        }
-                    }
-                });
-                builder.show();
-            }
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            // Android M Permission check
+//            if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                builder.setTitle("This app needs location access");
+//                builder.setMessage("Please grant location access so this app can detect beacons.");
+//                builder.setPositiveButton(android.R.string.ok, null);
+//                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+//
+//                    public void onDismiss(DialogInterface dialog) {
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                            requestPermissions(new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+//                        }
+//                    }
+//                });
+//                builder.show();
+//            }
+//        }
         mHandler = new Handler();
 
 
@@ -135,6 +134,8 @@ public class MainActivity extends AppCompatActivity{
         tHR_Status = (TextView) findViewById(R.id.HR_Status);
         tHR_Data = (TextView) findViewById(R.id.HR_Data);
         tHR_Device = (TextView) findViewById(R.id.HR_Device);
+
+        tGPS_Status = (TextView) findViewById(R.id.GPS_Status);
 
         cbStopwatch = (CheckBox) findViewById(R.id.cbStopwatch);
 
@@ -317,6 +318,7 @@ public class MainActivity extends AppCompatActivity{
             if (mDeviceAddress == null ) {
                 mScanning = true;
                 startTimeCounter();
+                Log.i(TAG, "startLeScan 1");
                 mBluetoothAdapter.startLeScan(mLeScanCallback);
             } else {
 //                Log.i(TAG, "Connect to stored device: " + mDeviceAddress);
@@ -325,11 +327,13 @@ public class MainActivity extends AppCompatActivity{
         } else {
 
             mScanning = false;
+            Log.i(TAG, "stopLeScan 1");
+
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            if (mBluetoothLeService != null) {
-                mBluetoothLeService.disconnect();
-                mBluetoothLeService.close();
-            }
+//            if (mBluetoothLeService != null) {
+//                mBluetoothLeService.disconnect();
+//                mBluetoothLeService.close();
+//            }
         }
     }
 
@@ -439,6 +443,14 @@ public class MainActivity extends AppCompatActivity{
     protected void onResume() {
         super.onResume();
 
+        if(ShowSpeed) {
+                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);;
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                {
+                    tGPS_Status.setText("GPS enabled");
+                }
+        }
+
         if(ShowHR) {
             Log.e(TAG, "Resume -> scanForHRM");
 
@@ -500,6 +512,10 @@ public class MainActivity extends AppCompatActivity{
 
         if(ShowHR) {
             unbindService(mServiceConnection);
+            if (mBluetoothLeService != null) {
+                mBluetoothLeService.disconnect();
+                mBluetoothLeService.close();
+            }
         }
 
     }
