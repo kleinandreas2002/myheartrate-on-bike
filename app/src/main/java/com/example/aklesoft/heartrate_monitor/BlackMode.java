@@ -91,8 +91,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     boolean bShowHR;
     boolean bShowClock;
     boolean bShowTimer;
+    boolean bStartStopwatch;
 
 //  BlueTooth
+    private static final int SCAN_PERIOD = 20000;
+    private long mTimestamp = 0;
+
     BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeService mBluetoothLeService;
     public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
@@ -106,6 +110,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     public static final int MODE_SERVICE_DISCOVERED = 3;
     public int state = MODE_DISCONNECTED;
 
+    public MainActivity mainActivity;
 
 
 
@@ -144,10 +149,13 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             }
         }
 
+        mainActivity = new MainActivity();
+
         bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed");
         bShowHR = getIntent().getExtras().getBoolean("ShowHR");
         bShowClock = getIntent().getExtras().getBoolean("ShowClock");
         bShowTimer = getIntent().getExtras().getBoolean("ShowTimer");
+        bStartStopwatch = getIntent().getExtras().getBoolean( "StartStopwatch");
         HR_DeviceName = getIntent().getExtras().getString("HR_DeviceName");
         HR_DeviceAddress = getIntent().getExtras().getString("HR_DeviceAddress");
 
@@ -225,6 +233,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
         if(bShowTimer) {
             tTimerView.setVisibility(View.VISIBLE);
+            if( bStartStopwatch ) {
+                StartTimer(getWindow().getDecorView().getRootView());
+            }
         }
         else
         {
@@ -440,7 +451,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         if (enable) {
 
             if (HR_DeviceAddress == null) {
-
+                startTimeCounter();
                 mBluetoothAdapter.startLeScan(mLeScanCallback);
             } else {
                 Log.i(TAG, "Connect to stored device: " + HR_DeviceAddress);
@@ -478,11 +489,22 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                     checkForHrmService(device.getAddress());
 //                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
 
+                    if (isTimeAlready(SCAN_PERIOD)) {
+                        mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                        Log.i(TAG, "Stop BT scan. timeout");
+                    }
                 }
             });
 
         }
     };
+
+    private void startTimeCounter() {
+        mTimestamp = System.currentTimeMillis();
+    }
+    private boolean isTimeAlready(int mkSeconds) {
+        return System.currentTimeMillis() - mTimestamp > mkSeconds ? true : false;
+    }
 
     private void checkForHrmService(String address) {
         Log.i(TAG, "ASYCN CHECK FOR HRM SERVICE");
@@ -616,7 +638,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
 
     public void setHrValue(int hrData) {
-        tHRView.setText(Integer.toString(hrData)+" bpm" );
+        tHRView.setText(Integer.toString(hrData));
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {

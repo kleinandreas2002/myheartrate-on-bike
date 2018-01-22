@@ -20,6 +20,7 @@ import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -58,7 +59,8 @@ public class MainActivity extends AppCompatActivity{
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
-    private static final long SCAN_PERIOD = 5000;
+    private static final int SCAN_PERIOD = 20000;
+    private long mTimestamp = 0;
     private boolean mScanning;
 
     public static TextView tHR_Status;
@@ -76,11 +78,15 @@ public class MainActivity extends AppCompatActivity{
 //  ImageButton
     private ImageButton ibResetDevice;
 
-    //  ToggleButtons
+//  ToggleButtons
     private ToggleButton SettingSpeedView;
     private ToggleButton SettingHRView;
     private ToggleButton SettingClockView;
     private ToggleButton SettingTimerView;
+
+//  CheckBox
+    private CheckBox cbStopwatch;
+    private boolean bcbStopwatch;
 
 //  parameters for BlackMode
     private boolean ShowSpeed;
@@ -130,6 +136,8 @@ public class MainActivity extends AppCompatActivity{
         tHR_Data = (TextView) findViewById(R.id.HR_Data);
         tHR_Device = (TextView) findViewById(R.id.HR_Device);
 
+        cbStopwatch = (CheckBox) findViewById(R.id.cbStopwatch);
+
 //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
         ShowSpeed = pref.getBoolean("ShowSpeed", false);
@@ -137,11 +145,17 @@ public class MainActivity extends AppCompatActivity{
         ShowClock = pref.getBoolean("ShowClock", false);
         ShowTimer = pref.getBoolean("ShowTimer", false);
 
+        bcbStopwatch = pref.getBoolean("StartStopwatch", false);
+        if( bcbStopwatch ) {
+            cbStopwatch.setChecked(bcbStopwatch);
+        }
         mDeviceAddress = pref.getString("deviceAddress", null);
         mDeviceName = pref.getString("deviceName", null);
 
         if( mDeviceName != null && mDeviceAddress != null ){
             ibResetDevice.setVisibility(View.VISIBLE);
+            setHRStatus("Found stored device " + mDeviceAddress);
+            setHRDevice(mDeviceName);
         }
 
         SettingSpeedView.setChecked(ShowSpeed);
@@ -286,6 +300,10 @@ public class MainActivity extends AppCompatActivity{
                             saveDevice(device);
                             mBluetoothAdapter.stopLeScan(mLeScanCallback);
 
+                            if (isTimeAlready(SCAN_PERIOD)) {
+                                mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                                Log.i(TAG, "Stop BT scan. timeout");
+                            }
                         }
                     });
 
@@ -298,11 +316,10 @@ public class MainActivity extends AppCompatActivity{
 
             if (mDeviceAddress == null ) {
                 mScanning = true;
+                startTimeCounter();
                 mBluetoothAdapter.startLeScan(mLeScanCallback);
             } else {
-                Log.i(TAG, "Connect to stored device: " + mDeviceAddress);
-                setHRStatus("Found stored device " + mDeviceAddress);
-                setHRDevice(mDeviceName);
+//                Log.i(TAG, "Connect to stored device: " + mDeviceAddress);
 
             }
         } else {
@@ -314,8 +331,14 @@ public class MainActivity extends AppCompatActivity{
                 mBluetoothLeService.close();
             }
         }
+    }
 
+    private void startTimeCounter() {
+        mTimestamp = System.currentTimeMillis();
+    }
 
+    private boolean isTimeAlready(int mkSeconds) {
+        return System.currentTimeMillis() - mTimestamp > mkSeconds ? true : false;
     }
 
     public void setHRStatus(String HRStatus) {
@@ -419,8 +442,19 @@ public class MainActivity extends AppCompatActivity{
         if(ShowHR) {
             Log.e(TAG, "Resume -> scanForHRM");
 
+            pref = getSharedPreferences("Heartrate_Monitor", 0);
+            mDeviceAddress = pref.getString("deviceAddress", null);
+            mDeviceName = pref.getString("deviceName", null);
+
+
             scanForHRM(true);
             registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+
+            if( mDeviceName != null && mDeviceAddress != null ){
+                ibResetDevice.setVisibility(View.VISIBLE);
+                setHRStatus("Found stored device " + mDeviceAddress);
+                setHRDevice(mDeviceName);
+            }
         }
     }
 
@@ -428,7 +462,7 @@ public class MainActivity extends AppCompatActivity{
     protected void onPause(){
         super.onPause();
         if(ShowHR) {
-            scanForHRM(false);
+//            scanForHRM(false);
             unregisterReceiver(mGattUpdateReceiver);
         }
     }
@@ -452,6 +486,7 @@ public class MainActivity extends AppCompatActivity{
         editor.putBoolean("ShowHR", this.ShowHR);
         editor.putBoolean("ShowTimer", this.ShowTimer);
         editor.putBoolean("ShowClock", this.ShowClock);
+        editor.putBoolean("StartStopwatch", this.bcbStopwatch);
         editor.commit();
 
     }
@@ -507,7 +542,7 @@ public class MainActivity extends AppCompatActivity{
         myIntent.putExtra("ShowClock", this.ShowClock);
         myIntent.putExtra( "HR_DeviceName", this.HR_DeviceName);
         myIntent.putExtra( "HR_DeviceAddress", this.HR_DeviceAddress);
-
+        myIntent.putExtra( "StartStopwatch", this.bcbStopwatch);
         if (mScanning) {
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
             mScanning = false;
@@ -532,7 +567,12 @@ public class MainActivity extends AppCompatActivity{
 
         editor.commit();
 
-        ibResetDevice.setVisibility(View.VISIBLE);
+        if( device.getAddress() != null && device.getName() != null) {
+            ibResetDevice.setVisibility(View.VISIBLE);
+            setHRStatus("Found stored device " + device.getAddress());
+            setHRDevice(device.getName());
+        }
+
     }
 
 
@@ -575,7 +615,18 @@ public class MainActivity extends AppCompatActivity{
         editor.commit();
         mDeviceAddress = null;
         mDeviceName = null;
+        setHRStatus(getString(R.string.tHR_Status));
+        setHRDevice("");
         ibResetDevice.setVisibility(View.GONE);
 
+    }
+
+    public void setcbStopwatch(View view) {
+        if( cbStopwatch.isChecked() ) {
+            bcbStopwatch = true;
+        }
+        else {
+            bcbStopwatch = false;
+        }
     }
 }

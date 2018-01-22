@@ -55,7 +55,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/cbStopwatch"
-                    android:theme="@style/MyCheckBoxes"/>
+                    android:theme="@style/MyCheckBoxes"
+                    android:onClick="setcbStopwatch"/>
 
             </LinearLayout>
 
@@ -185,7 +186,6 @@
                             android:id="@+id/HR_Status"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:text="@string/tHR_Status"
                             android:textColor="@color/cast_expanded_controller_background_color" />
 
@@ -193,7 +193,6 @@
                             android:id="@+id/HR_Device"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:text=""
                             android:textColor="@color/cast_expanded_controller_background_color" />
 
@@ -211,7 +210,7 @@
                             android:layout_weight="1"
                             android:background="@color/cast_expanded_controller_ad_container_white_stripe_color"
                             android:onClick="ResetDevice"
-                            android:visibility="visible"
+                            android:visibility="gone"
                             app:srcCompat="@drawable/ic_reset_button" />
 
                     </LinearLayout>
