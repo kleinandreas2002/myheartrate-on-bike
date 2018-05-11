@@ -31,6 +31,8 @@
     <string name="tClock">Clock</string>
     <string name="tHRViewData">--</string>
     <string name="tHRView">bpm</string>
+    <string name="tHRPercentage">%</string>
+    <string name="tHRViewPercentage">%</string>
     <string name="tSpeedometerViewData">--</string>
     <string name="tSpeedometerView">kmh</string>
     <string name="tTimerView">00:00.00</string>

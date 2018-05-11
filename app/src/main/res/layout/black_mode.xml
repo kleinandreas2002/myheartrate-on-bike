@@ -5,8 +5,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="#000000"
-    android:orientation="vertical"
-    >
+    android:orientation="vertical">
 
     <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/BlackModeView"
@@ -32,10 +31,10 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <android.support.constraint.Group
+            android:id="@+id/groupSpeedView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:constraint_referenced_ids="SpeedView,space,SpeedViewUnit"
-            android:id="@+id/groupSpeedView" />
+            app:constraint_referenced_ids="SpeedView,SpeedViewUnit" />
 
         <TextView
             android:id="@+id/SpeedView"
@@ -47,41 +46,32 @@
             android:textColor="#ffffff"
             android:textSize="72sp"
             android:visibility="visible"
-            app:layout_constraintEnd_toStartOf="@+id/space"
+            app:layout_constraintEnd_toStartOf="@+id/SpeedViewUnit"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/TimerView" />
 
-
-
-        <Space
-            android:id="@+id/space"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toTopOf="@+id/SpeedViewUnit"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/SpeedView"
-            app:layout_constraintTop_toBottomOf="@+id/TimerView" />
 
         <TextView
             android:id="@+id/SpeedViewUnit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
             android:padding="12sp"
             android:text="@string/tSpeedometerView"
             android:textAlignment="viewStart"
             android:textColor="#ffffff"
             android:textSize="36sp"
             android:visibility="visible"
-            app:layout_constraintBottom_toBottomOf="@+id/SpeedView"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/SpeedView" />
+            app:layout_constraintStart_toEndOf="@+id/SpeedView"
+            app:layout_constraintTop_toBottomOf="@+id/TimerView" />
 
 
         <android.support.constraint.Group
+            android:id="@+id/groupHRView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:constraint_referenced_ids="HRView,space,HRViewUnit"
-            android:id="@+id/groupHRView" />
+            app:constraint_referenced_ids="HRView,space2,HRViewUnit,HRPercentage,space3,HRPercentageUnit" />
 
         <TextView
             android:id="@+id/HRView"
@@ -93,34 +83,75 @@
             android:textColor="#ffffff"
             android:textSize="72sp"
             android:visibility="visible"
-            app:layout_constraintEnd_toStartOf="@+id/space2"
+            app:layout_constraintEnd_toStartOf="@+id/HRViewUnit"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
 
 
-        <Space
-            android:id="@+id/space2"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toTopOf="@+id/HRViewUnit"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/HRView"
-            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
+        <!--<Space-->
+        <!--android:id="@+id/space2"-->
+        <!--android:layout_width="0dp"-->
+        <!--android:layout_height="0dp"-->
+        <!--app:layout_constraintBottom_toTopOf="@+id/HRViewUnit"-->
+        <!--app:layout_constraintEnd_toEndOf="parent"-->
+        <!--app:layout_constraintStart_toEndOf="@+id/HRView"-->
+        <!--app:layout_constraintTop_toBottomOf="@+id/SpeedView" />-->
 
         <TextView
             android:id="@+id/HRViewUnit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
             android:padding="12sp"
             android:text="@string/tHRView"
             android:textAlignment="viewStart"
             android:textColor="#ffffff"
             android:textSize="36sp"
             android:visibility="visible"
-            app:layout_constraintBottom_toBottomOf="@+id/HRView"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/HRView" />
+            app:layout_constraintEnd_toStartOf="@+id/HRPercentage"
+            app:layout_constraintStart_toEndOf="@+id/HRView"
+            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
 
+        <TextView
+            android:id="@+id/HRPercentage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:padding="12sp"
+            android:text="@string/tHRViewData"
+            android:textAlignment="textEnd"
+            android:textColor="#ffffff"
+            android:textSize="72sp"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/HRPercentageUnit"
+            app:layout_constraintStart_toEndOf="@+id/HRViewUnit"
+            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
+
+
+        <!--<Space-->
+        <!--android:id="@+id/space3"-->
+        <!--android:layout_width="0dp"-->
+        <!--android:layout_height="0dp"-->
+        <!--app:layout_constraintBottom_toTopOf="@+id/HRViewUnit"-->
+        <!--app:layout_constraintEnd_toEndOf="parent"-->
+        <!--app:layout_constraintStart_toEndOf="@+id/HRView"-->
+        <!--app:layout_constraintTop_toBottomOf="@+id/SpeedView" />-->
+
+        <TextView
+            android:id="@+id/HRPercentageUnit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:padding="12sp"
+            android:text="@string/tHRViewPercentage"
+            android:textAlignment="viewStart"
+            android:textColor="#ffffff"
+            android:textSize="36sp"
+            android:visibility="visible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/HRPercentage"
+            app:layout_constraintTop_toBottomOf="@+id/SpeedViewUnit" />
 
     </android.support.constraint.ConstraintLayout>
 

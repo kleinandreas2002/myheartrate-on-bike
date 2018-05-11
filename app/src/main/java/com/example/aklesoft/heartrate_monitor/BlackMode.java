@@ -70,6 +70,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private String provider;
     private TextView tSpeedView;
     private TextView tHRView;
+    private TextView tHRPercentage;
     private TextView tClockView;
     private TextView tTimerView;
     private LinearLayout lHRViewUnit;
@@ -171,6 +172,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         tSpeedView = (TextView) this.findViewById(R.id.SpeedView);
         tHRView = (TextView) this.findViewById(R.id.HRView);
+        tHRPercentage = (TextView) this.findViewById(R.id.HRPercentage);
         tClockView = (TextView) this.findViewById(R.id.ClockView);
         tTimerView = (TextView) this.findViewById(R.id.TimerView);
 
@@ -627,7 +629,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             Log.i(TAG, "BTS Callback action: " + action);
 
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                tHRView.setText("Connect...");
+                tHRView.setText("...");
                 //ToDo
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
 //                setActivityState(MODE_DISCONNECTED);
@@ -635,7 +637,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 //ToDo
                 if (mBluetoothLeService != null) {
-                    tHRView.setText("... wait for bpm");
+                    tHRView.setText("...process...");
                     mBluetoothLeService.turnHRMNotification();
 //                    setActivityState(MODE_SERVICE_DISCOVERED);
                 }
@@ -646,7 +648,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 }
 
                 Log.i(TAG, "HRM: " + intent.getStringExtra(mBluetoothLeService.EXTRA_DATA));
-                setHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+                setHrValues(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
 
 //                viewProgress.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
 //                viewGauge.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
@@ -659,19 +661,22 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     };
 
 
-    public void setHrValue(int hrData) {
+    public void setHrValues(int hrData) {
         tHRView.setText(Integer.toString(hrData));
+        int iPercentage = (int) ((hrData*100.0f)/195);
+//        int iPercentage = (int) fPercentage;
+        tHRPercentage.setText(Integer.toString(iPercentage));
     }
 
-    public void setHrValue(final String hrData) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                tHRView.setText(hrData);
-//                lHRViewUnit.setVisibility(getWindow().getDecorView().getRootView().GONE);
-            }
-        });
-    }
+//    public void setHrValue(final String hrData) {
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                tHRView.setText(hrData);
+////                lHRViewUnit.setVisibility(getWindow().getDecorView().getRootView().GONE);
+//            }
+//        });
+//    }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
 
