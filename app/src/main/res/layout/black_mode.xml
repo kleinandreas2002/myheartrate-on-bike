@@ -1,124 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="#000000"
     android:orientation="vertical"
     >
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/BlackModeView"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#000000"
-        android:orientation="vertical"
-        >
+        android:background="#000000">
+
         <TextView
             android:id="@+id/TimerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:clickable="true"
             android:focusable="true"
             android:onClick="StartTimer"
-            android:text="@string/tTimerView"
             android:padding="12sp"
+            android:text="@string/tTimerView"
             android:textAlignment="center"
             android:textColor="#ffffff"
             android:textSize="72sp"
-            android:visibility="visible" />
+            android:visibility="visible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/SpeedViewLayout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:weightSum="2">
+        <android.support.constraint.Group
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="SpeedView,space,SpeedViewUnit"
+            android:id="@+id/groupSpeedView" />
 
-            <TextView
-                android:id="@+id/SpeedView"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:padding="12sp"
-                android:text="@string/tSpeedometerViewData"
-                android:textAlignment="textEnd"
-                android:textColor="#ffffff"
-                android:textSize="72sp"
-                android:visibility="visible" />
+        <TextView
+            android:id="@+id/SpeedView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="12sp"
+            android:text="@string/tSpeedometerViewData"
+            android:textAlignment="textEnd"
+            android:textColor="#ffffff"
+            android:textSize="72sp"
+            android:visibility="visible"
+            app:layout_constraintEnd_toStartOf="@+id/space"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/TimerView" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
 
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
 
-                <TextView
-                    android:id="@+id/SpeedViewUnit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="12sp"
-                    android:text="@string/tSpeedometerView"
-                    android:textAlignment="viewStart"
-                    android:textColor="#ffffff"
-                    android:textSize="36sp"
-                    android:visibility="visible" />
+        <Space
+            android:id="@+id/space"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toTopOf="@+id/SpeedViewUnit"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/SpeedView"
+            app:layout_constraintTop_toBottomOf="@+id/TimerView" />
 
-            </LinearLayout>
+        <TextView
+            android:id="@+id/SpeedViewUnit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="12sp"
+            android:text="@string/tSpeedometerView"
+            android:textAlignment="viewStart"
+            android:textColor="#ffffff"
+            android:textSize="36sp"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="@+id/SpeedView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/SpeedView" />
 
-        </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/HRViewLayout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:weightSum="2">
+        <android.support.constraint.Group
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="HRView,space,HRViewUnit"
+            android:id="@+id/groupHRView" />
 
-            <TextView
-                android:id="@+id/HRView"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:padding="12sp"
-                android:text="@string/tHRViewData"
-                android:textAlignment="textEnd"
-                android:textColor="#ffffff"
-                android:textSize="72sp"
-                android:visibility="visible" />
+        <TextView
+            android:id="@+id/HRView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="12sp"
+            android:text="@string/tHRViewData"
+            android:textAlignment="textEnd"
+            android:textColor="#ffffff"
+            android:textSize="72sp"
+            android:visibility="visible"
+            app:layout_constraintEnd_toStartOf="@+id/space2"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
 
-            <LinearLayout
-                android:id="@+id/LayoutHRViewUnit"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
 
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
+        <Space
+            android:id="@+id/space2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toTopOf="@+id/HRViewUnit"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/HRView"
+            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
 
-                <TextView
-                    android:id="@+id/HRViewUnit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="12sp"
-                    android:text="@string/tHRView"
-                    android:textAlignment="viewStart"
-                    android:textColor="#ffffff"
-                    android:textSize="36sp"
-                    android:visibility="visible" />
+        <TextView
+            android:id="@+id/HRViewUnit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="12sp"
+            android:text="@string/tHRView"
+            android:textAlignment="viewStart"
+            android:textColor="#ffffff"
+            android:textSize="36sp"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="@+id/HRView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/HRView" />
 
-            </LinearLayout>
 
-        </LinearLayout>
-
-    </LinearLayout>
+    </android.support.constraint.ConstraintLayout>
 
     <DigitalClock
         android:id="@+id/ClockView"

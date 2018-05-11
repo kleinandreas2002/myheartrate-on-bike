@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.location.Criteria;
@@ -31,6 +32,7 @@ import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.Group;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Display;
@@ -161,9 +163,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         HR_DeviceAddress = getIntent().getExtras().getString("HR_DeviceAddress");
 
 
-        lHRViewUnit = (LinearLayout) this.findViewById(R.id.LayoutHRViewUnit);
-        lSpeedView = (LinearLayout) this.findViewById(R.id.SpeedViewLayout);
-        lHRView = (LinearLayout) this.findViewById(R.id.HRViewLayout);
+//        lHRViewUnit = (LinearLayout) this.findViewById(R.id.LayoutHRViewUnit);
+//        lSpeedView = (LinearLayout) this.findViewById(R.id.SpeedViewLayout);
+//        lHRView = (LinearLayout) this.findViewById(R.id.HRViewLayout);
+        Group groupSpeedView = findViewById(R.id.groupSpeedView);
+        Group groupHRView = findViewById(R.id.groupHRView);
+
         tSpeedView = (TextView) this.findViewById(R.id.SpeedView);
         tHRView = (TextView) this.findViewById(R.id.HRView);
         tClockView = (TextView) this.findViewById(R.id.ClockView);
@@ -174,7 +179,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             blocationManager = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-            lSpeedView.setVisibility(View.VISIBLE);
+//            lSpeedView.setVisibility(View.VISIBLE);
+            groupSpeedView.setVisibility(View.VISIBLE);
 
             client = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -217,15 +223,19 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
         else
         {
-            lSpeedView.setVisibility(View.GONE);
+//            lSpeedView.setVisibility(View.GONE);
+            groupSpeedView.setVisibility(View.GONE);
+
         }
         if(bShowHR) {
-            lHRView.setVisibility(View.VISIBLE);
+//            lHRView.setVisibility(View.VISIBLE);
+            groupHRView.setVisibility(View.VISIBLE);
             initBt();
         }
         else
         {
-            lHRView.setVisibility(View.GONE);
+//            lHRView.setVisibility(View.GONE);
+            groupHRView.setVisibility(View.GONE);
         }
         if(bShowClock) {
             tClockView.setVisibility(View.VISIBLE);
@@ -245,6 +255,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             tTimerView.setVisibility(View.GONE);
         }
 
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getDisplaySize();
 
 // change speed textview position
@@ -657,7 +668,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             @Override
             public void run() {
                 tHRView.setText(hrData);
-                lHRViewUnit.setVisibility(getWindow().getDecorView().getRootView().GONE);
+//                lHRViewUnit.setVisibility(getWindow().getDecorView().getRootView().GONE);
             }
         });
     }
