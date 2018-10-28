@@ -30,8 +30,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.constraint.Group;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -98,7 +96,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     boolean bStartStopwatch;
 
 //  BlueTooth
-    private static final int SCAN_PERIOD = 5000;
+    private static final int SCAN_PERIOD = 10000;
     private long mTimestamp = 0;
 
     BluetoothAdapter mBluetoothAdapter;
@@ -541,6 +539,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                     if (gatt != null) {
                         Log.i(TAG, "Connected to GATT Server");
                         Log.i(TAG, "Attempting to start service discovery: " + gatt.discoverServices());
+
                     }
                 }
                 else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -740,7 +739,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void onConnected(Bundle bundle) {
 
     }
 
@@ -749,10 +748,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     }
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
-    }
 
     public void StartTimer(View view) {
         if (!timerrunning) {
@@ -813,4 +809,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
     }
 
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
 }
