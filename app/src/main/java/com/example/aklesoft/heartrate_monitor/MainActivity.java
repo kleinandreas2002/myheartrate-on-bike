@@ -1,8 +1,20 @@
 package com.example.aklesoft.heartrate_monitor;
 
+import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -13,11 +25,15 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.ParcelUuid;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
@@ -26,39 +42,51 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 
+import static com.example.aklesoft.heartrate_monitor.Constants.CHARACTERISTIC_ECHO_STRING;
+import static com.example.aklesoft.heartrate_monitor.Constants.SERVICE_UUID;
+import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
+
+
 public class MainActivity extends AppCompatActivity{
-    private final static String TAG = MainActivity.class.getSimpleName();
+    public final static String TAG = MainActivity.class.getSimpleName();
+    public static String HEART_RATE_MEASUREMENT = "0000180d-0000-1000-8000-00805f9b34fb";
+    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+
+    //  UUIDs
+    static final UUID HEART_RATE_SERVICE_UUID = convertFromInteger(0x180D);
+    static final UUID HEART_RATE_MEASUREMENT_CHAR_UUID = convertFromInteger(0x2A37);
+    final UUID HEART_RATE_CONTROL_POINT_CHAR_UUID = convertFromInteger(0x2A39);
+
+    public static UUID convertFromInteger(int i) {
+        final long MSB = 0x0000000000001000L;
+        final long LSB = 0x800000805f9b34fbL;
+        long value = i & 0xFFFFFFFF;
+        return new UUID(MSB | (value << 32), LSB);
+    }
 
     //  Bluetooth
 
-    public static final int MODE_DISCONNECTED = 0;
-    public static final int MODE_CONNECTING = 1;
-    public static final int MODE_CONNECTED = 2;
-    public static final int MODE_SERVICE_DISCOVERED = 3;
-
     private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothLeService mBluetoothLeService;
+    private int REQUEST_ENABLE_BT = 1;
+    private Handler mHandler;
+    private BluetoothLeScanner mLeScanner;
+    private ScanSettings settings;
+    private List<ScanFilter> filters;
+    private BluetoothGatt mGatt;
+//    private ScanCallback mScanCallback;
 
+    //    private BluetoothLeService mBluetoothLeService;
     private int HRStartData = -10;
 
-    public static BluetoothLeService mServiceStatus;
 
-    Handler mHandler;
-    private String stateBluetooth = "disabled";
-    public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
     public String mDeviceAddress = null;
     public String mDeviceName = null;
 
-    public int state = MODE_DISCONNECTED;
-    public boolean mBluetoothLeServiceResult = false;
-
-    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
-    private static final int REQUEST_ENABLE_BT = 1;
-    // Stops scanning after 10 seconds.
-    private static final int SCAN_PERIOD = 10000;
     private long mTimestamp = 0;
     private boolean mScanning;
 
@@ -70,7 +98,10 @@ public class MainActivity extends AppCompatActivity{
     public static String HR_DeviceName;
 
     public static TextView tGPS_Status;
-//  LinearLayout
+
+    public static TextView tBT_status;
+
+    //  LinearLayout
     private LinearLayout MainView;
     TooltipWindow tipWindow;
     private float[] lastTouchDownXY = new float[2];
@@ -105,26 +136,28 @@ public class MainActivity extends AppCompatActivity{
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            // Android M Permission check
-//            if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//                builder.setTitle("This app needs location access");
-//                builder.setMessage("Please grant location access so this app can detect beacons.");
-//                builder.setPositiveButton(android.R.string.ok, null);
-//                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-//
-//                    public void onDismiss(DialogInterface dialog) {
-//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                            requestPermissions(new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
-//                        }
-//                    }
-//                });
-//                builder.show();
-//            }
-//        }
-        mHandler = new Handler();
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+//            return;
 
+        }
+
+
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Toast.makeText(this, "BLE Not Supported",
+                    Toast.LENGTH_SHORT).show();
+//            finish();
+        }
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = bluetoothManager.getAdapter();
 
         SettingSpeedView = (ToggleButton) findViewById(R.id.SettingSpeedView);
         SettingHRView = (ToggleButton) findViewById(R.id.SettingHRView);
@@ -141,12 +174,18 @@ public class MainActivity extends AppCompatActivity{
 
         cbStopwatch = (CheckBox) findViewById(R.id.cbStopwatch);
 
+        tBT_status = (TextView) findViewById(R.id.BT_Status);
 //  prepare shared data
+        Log.e(TAG, "onCreate -> BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
+
         pref = getSharedPreferences("Heartrate_Monitor", 0);
         ShowSpeed = pref.getBoolean("ShowSpeed", false);
         ShowHR = pref.getBoolean("ShowHR", false);
         ShowClock = pref.getBoolean("ShowClock", false);
         ShowTimer = pref.getBoolean("ShowTimer", false);
+
+        editor = pref.edit();
+        editor.commit();
 
         bcbStopwatch = pref.getBoolean("StartStopwatch", false);
         if( bcbStopwatch ) {
@@ -166,7 +205,6 @@ public class MainActivity extends AppCompatActivity{
         SettingClockView.setChecked(ShowClock);
         SettingTimerView.setChecked(ShowTimer);
 
-        Initialize_BTLE();
 
         tipWindow = new TooltipWindow(MainActivity.this);
         MainView = (LinearLayout) findViewById(R.id.MainView);
@@ -204,140 +242,6 @@ public class MainActivity extends AppCompatActivity{
 
     }
 
-    private boolean Initialize_BTLE() {
-
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, "BT not supported by phone", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
-        // BluetoothAdapter through BluetoothManager.
-        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-
-        BluetoothAdapter_Initialize(true);
-
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(this, "BT adapter not available", Toast.LENGTH_SHORT).show();
-            finish();
-            return false;
-        }
-
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, 1);
-        }
-
-        return true;
-    }
-
-
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.main, menu);
-//        if (!mScanning) {
-//            menu.findItem(R.id.menu_stop).setVisible(false);
-//            menu.findItem(R.id.menu_scan).setVisible(true);
-//            menu.findItem(R.id.menu_refresh).setActionView(null);
-//        } else {
-//            menu.findItem(R.id.menu_stop).setVisible(true);
-//            menu.findItem(R.id.menu_scan).setVisible(false);
-//            menu.findItem(R.id.menu_refresh).setActionView(
-//                    R.layout.actionbar_indeterminate_progress);
-//        }
-//        return true;
-//    }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        switch (item.getItemId()) {
-//            case R.id.menu_scan:
-//                scanLeDevice(true, mBluetoothAdapter);
-//
-//                break;
-//            case R.id.menu_stop:
-//                scanLeDevice(false, mBluetoothAdapter);
-//
-//                break;
-//        }
-//        return true;
-//    }
-
-
-//    public void scanLeDevice(final boolean enable, final BluetoothAdapter mBluetoothAdapter) {
-//        if (enable) {
-//            // Stops scanning after a pre-defined scan period.
-//            mHandler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    mScanning = false;
-//                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
-//                    invalidateOptionsMenu();
-//                }
-//            }, SCAN_PERIOD);
-//
-//            mScanning = true;
-//            mBluetoothAdapter.startLeScan(mLeScanCallback);
-//        } else {
-//            mScanning = false;
-//            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-//        }
-//        invalidateOptionsMenu();
-//
-//
-//    }
-
-    // Device scan callback.
-    public BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback() {
-
-                @Override
-                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.i(TAG, "Device Found: " + device.getName() + " / " + device.getAddress());
-
-                            HR_DeviceAddress = device.getAddress();
-                            HR_DeviceName = device.getName();
-                            saveDevice(device);
-                            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-
-                            if (isTimeAlready(SCAN_PERIOD)) {
-                                mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                                Log.i(TAG, "Stop BT scan. timeout");
-                            }
-                        }
-                    });
-
-                }
-            };
-
-    private void scanForHRM(final boolean enable) {
-
-        if (enable) {
-
-            if (mDeviceAddress == null ) {
-                mScanning = true;
-                startTimeCounter();
-                Log.i(TAG, "startLeScan 1");
-                mBluetoothAdapter.startLeScan(mLeScanCallback);
-            } else {
-//                Log.i(TAG, "Connect to stored device: " + mDeviceAddress);
-
-            }
-        } else {
-
-            mScanning = false;
-            Log.i(TAG, "stopLeScan 1");
-
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-//            if (mBluetoothLeService != null) {
-//                mBluetoothLeService.disconnect();
-//                mBluetoothLeService.close();
-//            }
-        }
-    }
 
     private void startTimeCounter() {
         mTimestamp = System.currentTimeMillis();
@@ -356,95 +260,28 @@ public class MainActivity extends AppCompatActivity{
         tHR_Device.setText(HRDevice);
     }
 
-//    private void connectDevice() {
-//
-//        if (mBluetoothLeService != null) {
-//
-//            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-//            mScanning = false;
-//            mBluetoothLeServiceResult = mBluetoothLeService.connect(mDeviceAddress, this);
-//            Log.e(TAG, "Connect request result=" + mBluetoothLeServiceResult);
-//        }
-//    }
-
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            final String action = intent.getAction();
-
-            Log.i(TAG, "BTS Callback action: " + action);
-
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                setHRStatus("Connected");
-                //ToDo
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                setHRStatus("Disconnected");
-                //ToDo
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                //ToDo
-                if (mBluetoothLeService != null) {
-                    setHRStatus("Connected - Ready to Start");
-                    mBluetoothLeService.turnHRMNotification();
-                }
-
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                if (state != MODE_CONNECTED) {
-//                    setActivityState(MODE_CONNECTED);
-                }
-
-                Log.i(TAG, "HRM: " + intent.getStringExtra(mBluetoothLeService.EXTRA_DATA));
-                setHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
-
-            }
-
-        }
-    };
-
-    public void setHrValue(int hrData) {
+    public void setHrData(int hrData) {
         this.HRStartData = hrData;
-
 //        tHR_Data.setText("HR Data: "+ Integer.toString(hrData) );
-        tHR_Data.setText(Integer.toString(hrData) );
-    }
 
+        runOnUiThread(new Runnable() {
 
-    private static IntentFilter makeGattUpdateIntentFilter() {
+            @Override
+            public void run() {
+                // Stuff that updates the UI
+                tHR_Data.setText(Integer.toString(hrData) );
 
-        final IntentFilter intentFilter = new IntentFilter();
-
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-
-        return intentFilter;
-    }
-
-
-
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            if (!mBluetoothLeService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-                finish();
             }
+        });
 
-            Log.e(TAG, "initialize Bluetooth");
-        }
+    }
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mBluetoothLeService = null;
-        }
-    };
 
     @Override
     protected void onResume() {
         super.onResume();
-
+        Log.e(TAG, "onResume - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
+        mHandler = new Handler();
         if(ShowSpeed) {
                 LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);;
                 if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
@@ -454,30 +291,168 @@ public class MainActivity extends AppCompatActivity{
         }
 
         if(ShowHR) {
-            Log.e(TAG, "Resume -> scanForHRM");
 
             pref = getSharedPreferences("Heartrate_Monitor", 0);
             mDeviceAddress = pref.getString("deviceAddress", null);
             mDeviceName = pref.getString("deviceName", null);
 
+            startScan();
+//            Log.e(TAG, "onResume -> registerReceiver");
+//            registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
-            scanForHRM(true);
-            registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
-            if( mDeviceName != null && mDeviceAddress != null ){
-                ibResetDevice.setVisibility(View.VISIBLE);
-                setHRStatus("Found stored device");
-                setHRDevice(mDeviceName);
-            }
+//            Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+//            startService(gattServiceIntent);
+//            Log.e(TAG, "onResume -> bindService");
+//            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         }
+    }
+
+//    private static IntentFilter makeGattUpdateIntentFilter() {
+//
+//        final IntentFilter intentFilter = new IntentFilter();
+//
+//        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+//        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+//        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+//        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+//
+//        return intentFilter;
+//
+//    }
+
+    private void startScan() {
+        Log.e(TAG, "onResume -> Start BT work");
+
+
+
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }
+        else {
+            if (Build.VERSION.SDK_INT >= 21) {
+                mLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+                settings = new ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .build();
+                filters = new ArrayList<ScanFilter>();
+                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_SERVICE_UUID)).build());
+                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_MEASUREMENT_CHAR_UUID)).build());
+//                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE_UUID)).build());
+//                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_CONTROL_POINT_CHAR_UUID)).build());
+            }
+            tBT_status.setText("Bluetooth enabled");
+            Log.e(TAG, "onResume -> scanLeDevice");
+            scanLeDevice(true);
+
+            mHandler.postDelayed(this::stopScan, SCAN_PERIOD);
+
+            mScanning = true;
+            Log.e(TAG, "Started scanning.");
+        }
+
+
+
+        if( mDeviceName != null && mDeviceAddress != null ){
+            ibResetDevice.setVisibility(View.VISIBLE);
+            setHRStatus("Found stored device");
+            setHRDevice(mDeviceName);
+        }
+    }
+
+    private void stopScan() {
+        if (mScanning && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && mLeScanner != null) {
+
+            mLeScanner.stopScan(mScanCallback);
+        }
+
+        mScanning = false;
+        mHandler = null;
+        Log.e(TAG, "Stopped scanning.");
+    }
+
+
+//    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//
+//            final String action = intent.getAction();
+//
+//            Log.i(TAG, "BTS Callback action: " + action);
+//
+//            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+//                tHR_Data.setText("...");
+//                Log.e(TAG, "...");
+//
+//                //ToDo
+//            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+////                setActivityState(MODE_DISCONNECTED);
+//                Log.e(TAG, "...disconnected...");
+//                tHR_Data.setText("");
+//
+//                //ToDo
+//            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+//                //ToDo
+//                if (mBluetoothLeService != null) {
+//                    Log.e(TAG, "...process...");
+//                    tHR_Data.setText("...process...");
+////                    turnHRMNotification();
+//                }
+//
+//            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+//                Log.i(TAG, "HRM: action:" + action);
+//                Log.i(TAG, "HRM: " + intent.getExtras().getString(mBluetoothLeService.EXTRA_DATA));
+//                setHrValues(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+//                setHrData(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+////                viewProgress.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+////                viewGauge.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
+////                viewChart.invalidate();
+//
+//                //ToDo
+//            }
+//
+//        }
+//    };
+
+//    public void turnHRMNotification() {
+//        Log.i(TAG, "Trying turn on HRM notifications");
+//        if (mGatt == null || mGatt.getServices() == null) {
+//            Log.i(TAG, "Error while accessing gatt services");
+//            return;
+//        }
+//        for (BluetoothGattService gattService : mGatt.getServices()) {
+//
+//            for(BluetoothGattCharacteristic gattCharacteristic : gattService.getCharacteristics()) {
+//                Log.i(TAG, "HRM service found");
+//                mBluetoothLeService.readCharacteristic(gattCharacteristic);
+//                gattCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+//                mBluetoothLeService.setCharacteristicNotification(gattCharacteristic, true);
+//
+//            }
+//
+//        }
+//
+//    }
+
+    public void setHrValues(int hrData) {
+        tHR_Status.setText(Integer.toString(hrData));
+//        int iPercentage = (int) ((hrData*100.0f)/195);
+//        int iPercentage = (int) fPercentage;
+//        tHRPercentage.setText(Integer.toString(iPercentage));
     }
 
     @Override
     protected void onPause(){
         super.onPause();
+
         if(ShowHR) {
-//            scanForHRM(false);
-            unregisterReceiver(mGattUpdateReceiver);
+            if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
+                scanLeDevice(false);
+            }
+
+//            unbindService(mServiceConnection);
+//            unregisterReceiver(mGattUpdateReceiver);
+
         }
     }
 
@@ -486,15 +461,44 @@ public class MainActivity extends AppCompatActivity{
         super.onStart();
 
         if(ShowHR) {
-            Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-            startService(gattServiceIntent);
-            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
         }
     }
+
+//    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+//        @Override
+//
+//        public void onServiceConnected(ComponentName name, IBinder service) {
+//            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+//
+//            if (mBluetoothLeService.isRunning) {
+////                switchConnection.setChecked(true);
+//                Log.e(TAG, "Reading Heart Rate");
+////                labelStatus.setText("Reading Heart Rate");
+////                labelValue.setText("...");
+//            }
+//            if (!mBluetoothLeService.initialize()) {
+//                Log.e(TAG, "Unable to initialize Bluetooth");
+//                finish();
+//            }
+//        }
+//        @Override
+//        public void onServiceDisconnected(ComponentName name) {
+//            mBluetoothLeService = null;
+//        }
+//    };
 
     @Override
     public void onStop() {
         super.onStop();
+
+//        mBluetoothAdapter.stopScan(scanCallback);
+
+        disconnectGattServer();
+        mGatt = null;
+        mHandler = null;
+
+        Log.e(TAG, "onStop -> SharedPreferences -> this.ShowHR:"+this.ShowHR);
         editor = pref.edit();
         editor.putBoolean("ShowSpeed", this.ShowSpeed);
         editor.putBoolean("ShowHR", this.ShowHR);
@@ -503,76 +507,326 @@ public class MainActivity extends AppCompatActivity{
         editor.putBoolean("StartStopwatch", this.bcbStopwatch);
         editor.commit();
 
+        System.exit(0);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
+        if(ShowHR) {
+
+            disconnectGattServer();
+            mGatt = null;
+        }
+
+
         if (tipWindow != null && tipWindow.isTooltipShown())
             tipWindow.dismissTooltip();
 
-        if(ShowHR) {
-            unbindService(mServiceConnection);
-            if (mBluetoothLeService != null) {
-                mBluetoothLeService.disconnect();
-                mBluetoothLeService.close();
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Bluetooth not enabled.
+                finish();
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void scanLeDevice(final boolean enable) {
+        if (enable) {
+//            mHandler.postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    if (Build.VERSION.SDK_INT < 21) {
+//                        mBluetoothAdapter.stopLeScan(mLeScanCallback);
+//                    } else {
+//                        Log.e(TAG, "scanLeDevice 1-> stopScan");
+//                        mLeScanner.stopScan(mScanCallback);
+//                    }
+//                }
+//            }, SCAN_PERIOD);
+            if (Build.VERSION.SDK_INT < 21) {
+                mBluetoothAdapter.startLeScan(mLeScanCallback);
+            } else {
+                Log.e(TAG, "scanLeDevice -> startScan");
+                mLeScanner.startScan(filters, settings, mScanCallback);
+            }
+        } else {
+            if (Build.VERSION.SDK_INT < 21) {
+                mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            } else {
+                Log.e(TAG, "scanLeDevice 2-> stopScan");
+                mLeScanner.stopScan(mScanCallback);
+            }
+        }
+    }
+
+    private ScanCallback mScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            Log.e(TAG, "onScanResult");
+            Log.i(TAG, String.valueOf(callbackType));
+            Log.e(TAG, "getDevice -> "+ result.toString());
+            Log.i(TAG, result.toString());
+            BluetoothDevice btDevice = result.getDevice();
+            Log.e(TAG, "onScanResult -> connectToDevice -> "+result.getDevice());
+            connectToDevice(btDevice);
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            for (ScanResult sr : results) {
+                Log.i("ScanResult - Results", sr.toString());
             }
         }
 
+        @Override
+        public void onScanFailed(int errorCode) {
+            Log.e("Scan Failed", "Error Code: " + errorCode);
+        }
+    };
+
+    private BluetoothAdapter.LeScanCallback mLeScanCallback =
+            new BluetoothAdapter.LeScanCallback() {
+                @Override
+                public void onLeScan(final BluetoothDevice device, int rssi,
+                                     byte[] scanRecord) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.i("onLeScan", device.toString());
+                            connectToDevice(device);
+                        }
+                    });
+                }
+            };
+
+    public void connectToDevice(BluetoothDevice device) {
+
+        tHR_Status.setText(device+" connecting");
+        GattClientCallback gattClientCallback = new GattClientCallback();
+        mGatt = device.connectGatt(this, false, gattClientCallback);
+        Log.e(TAG, "connectToDevice -> mGatt -> "+mGatt.getDevice());
+
+        if( mGatt.connect() ){
+            tHR_Status.setText(device.getName()+" connected");
+            Log.e(TAG, "connectToDevice -> scanLeDevice -> false");
+            scanLeDevice(false);// will stop after first device detection
+        }
+        else{
+            Log.e(TAG, "connectToDevice -> mGatt.connect() -> false");
+        }
+
+
+    }
+
+    private class GattClientCallback extends BluetoothGattCallback {
+
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+            Log.e(TAG, "onConnectionStateChange newState: " + newState);
+
+            if (status == BluetoothGatt.GATT_FAILURE) {
+                Log.e(TAG, "Connection Gatt failure status " + status);
+                disconnectGattServer();
+                return;
+            } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                // handle anything not SUCCESS as failure
+                Log.e(TAG, "Connection not GATT sucess status " + status);
+                disconnectGattServer();
+                return;
+            }
+
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                Log.e(TAG, "Connected to device " + gatt.getDevice().getAddress());
+
+                gatt.discoverServices();
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.e(TAG, "Disconnected from device");
+                disconnectGattServer();
+            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.e(TAG, "Device service discovery unsuccessful, status " + status);
+                return;
+            }
+
+            Log.e(TAG, "onServicesDiscovered ->"+gatt);
+            List<BluetoothGattCharacteristic> matchingCharacteristics = BluetoothUtils.findCharacteristics(gatt);
+            if (matchingCharacteristics.isEmpty()) {
+                Log.e(TAG, "Unable to find characteristics.");
+                return;
+            }
+
+            Log.e(TAG, "Initializing: setting write type and enabling notification");
+            for (BluetoothGattCharacteristic characteristic : matchingCharacteristics) {
+                characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                enableCharacteristicNotification(gatt, characteristic);
+                readCharacteristic(characteristic);
+
+//                mBluetoothLeService.readCharacteristic(gattCharacteristic);
+//                gattCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+//                mBluetoothLeService.setCharacteristicNotification(gattCharacteristic, true);
+
+            }
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.e(TAG, "Characteristic written successfully");
+
+            } else {
+                Log.e(TAG, "Characteristic write unsuccessful, status: " + status);
+                disconnectGattServer();
+            }
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.e(TAG, "Characteristic read successfully");
+                readCharacteristic(characteristic);
+            } else {
+                Log.e(TAG, "Characteristic read unsuccessful, status: " + status);
+                // Trying to read from the Time Characteristic? It doesnt have the property or permissions
+                // set to allow this. Normally this would be an error and you would want to:
+                // disconnectGattServer();
+            }
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+            Log.e(TAG, "Characteristic changed, " + characteristic.getUuid().toString());
+            readCharacteristic(characteristic);
+        }
+
+        private void enableCharacteristicNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            boolean characteristicWriteSuccess = gatt.setCharacteristicNotification(characteristic, true);
+            if (characteristicWriteSuccess) {
+                Log.e(TAG, "Characteristic notification set successfully for " + characteristic.getUuid().toString());
+
+// This is specific to Heart Rate Measurement.
+                Log.e(TAG, "CHARACTERISTIC_ECHO_STRING " + CHARACTERISTIC_ECHO_STRING);
+                Log.e(TAG, "characteristic.getUuid()   " + characteristic.getUuid());
+
+                if (CHARACTERISTIC_ECHO_STRING.equalsIgnoreCase(characteristic.getUuid().toString())) {
+                    BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+                            UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    boolean return_value = gatt.writeDescriptor(descriptor);
+                    Log.e(TAG, "writeDescriptor -> " + return_value);
+
+                }
+//                if (BluetoothUtils.isEchoCharacteristic(characteristic)) {
+//
+//                }
+            } else {
+                Log.e(TAG, "Characteristic notification set failure for " + characteristic.getUuid().toString());
+            }
+        }
+
+        private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+            byte[] messageBytes = characteristic.getValue();
+            Log.e(TAG, "Read: " + StringUtils.byteArrayInHexFormat(messageBytes));
+            String message = StringUtils.stringFromBytes(messageBytes);
+            if (message == null) {
+                Log.e(TAG, "Unable to convert bytes to string");
+                return;
+            }
+            int flag = characteristic.getProperties();
+            int format = -1;
+            if ((flag & 0x01) != 0) {
+                format = BluetoothGattCharacteristic.FORMAT_UINT16;
+                Log.d(TAG, "Heart rate format UINT16.");
+            } else {
+                format = BluetoothGattCharacteristic.FORMAT_UINT8;
+                Log.d(TAG, "Heart rate format UINT8.");
+            }
+            final int heartRate = characteristic.getIntValue(format, 1);
+            Log.e(TAG, String.format("Received heart rate: %d", heartRate));
+
+            Log.e(TAG, "Received message: " + message);
+            setHrData(heartRate);
+
+
+        }
+    }
+
+
+    public void disconnectGattServer() {
+        Log.e(TAG, "Closing Gatt connection");
+
+        if (mGatt != null) {
+            mGatt.disconnect();
+            mGatt.close();
+        }
     }
 
 ////////////////////////////////////
 //  Bluetooth Adapter initializing
 //  true = start from onStart()
 //  false = start from ButtonListener
-    public void BluetoothAdapter_Initialize(boolean checkOnActivityStart){
+//    public void BluetoothAdapter_Initialize(boolean checkOnActivityStart){
+//
+//        if (mBluetoothAdapter == null) {
+//            stateBluetooth = "Bluetooth NOT supported";
+//        } else {
+//            if (mBluetoothAdapter.isEnabled()) {
+//                if (mBluetoothAdapter.isDiscovering()) {
+//                    stateBluetooth = "Bluetooth is currently in device discovery process.";
+//                } else {
+//                    stateBluetooth = "Bluetooth is Enabled.";
+//                }
+//            } else {
+//                stateBluetooth = "Bluetooth is NOT Enabled!";
+//
+//                if(checkOnActivityStart) {
+//                    mBluetoothAdapter.enable();
+//                    stateBluetooth = "Bluetooth is Enabled.";
+//                }
+//            }
+//        }
+//        TextView bt_status = (TextView) findViewById(R.id.BT_Status);
+//        bt_status.setText(stateBluetooth);
+//    }
 
-        if (mBluetoothAdapter == null) {
-            stateBluetooth = "Bluetooth NOT supported";
-        } else {
-            if (mBluetoothAdapter.isEnabled()) {
-                if (mBluetoothAdapter.isDiscovering()) {
-                    stateBluetooth = "Bluetooth is currently in device discovery process.";
-                } else {
-                    stateBluetooth = "Bluetooth is Enabled.";
-                }
-            } else {
-                stateBluetooth = "Bluetooth is NOT Enabled!";
-
-                if(checkOnActivityStart) {
-                    mBluetoothAdapter.enable();
-                    stateBluetooth = "Bluetooth is Enabled.";
-                }
-            }
-        }
-        TextView bt_status = (TextView) findViewById(R.id.BT_Status);
-        bt_status.setText(stateBluetooth);
-    }
 
 ////////////////////////////////////////
 //  Set button for Blackmode
     public void GoToBlackMode() {
-        Intent myIntent = new Intent(getApplicationContext(), BlackMode.class);
-        myIntent.putExtra("ShowSpeed", this.ShowSpeed);
-        myIntent.putExtra("ShowHR", this.ShowHR);
-        myIntent.putExtra("ShowTimer", this.ShowTimer);
-        myIntent.putExtra("ShowClock", this.ShowClock);
-        myIntent.putExtra( "HR_DeviceName", this.HR_DeviceName);
-        myIntent.putExtra( "HR_DeviceAddress", this.HR_DeviceAddress);
-        myIntent.putExtra( "StartStopwatch", this.bcbStopwatch);
-        if (mScanning) {
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            mScanning = false;
-        }
-//        Log.d("\">>>>>>>>>>>>>>>>>>>>>>>>>>AKL <0> : ", "" );
-//        if( mServiceStatus != null ){
-//            unregisterReceiver(mGattUpdateReceiver);
-//            unbindService(mServiceConnection);
+//        Intent myIntent = new Intent(getApplicationContext(), BlackMode.class);
+//        myIntent.putExtra("ShowSpeed", this.ShowSpeed);
+//        myIntent.putExtra("ShowHR", this.ShowHR);
+//        myIntent.putExtra("ShowTimer", this.ShowTimer);
+//        myIntent.putExtra("ShowClock", this.ShowClock);
+//        myIntent.putExtra( "HR_DeviceName", this.HR_DeviceName);
+//        myIntent.putExtra( "HR_DeviceAddress", this.HR_DeviceAddress);
+//        myIntent.putExtra( "StartStopwatch", this.bcbStopwatch);
+//        if (mScanning) {
+//            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+//            mScanning = false;
 //        }
-
-        startActivity(myIntent);
-//        Log.d("\">>>>>>>>>>>>>>>>>>>>>>>>>>AKL <1> : ", "" );
+//
+//
+//        startActivity(myIntent);
+        Log.d("\">>>>>>>>AKL <1> : ", "" );
     }
 
 
@@ -607,8 +861,9 @@ public class MainActivity extends AppCompatActivity{
     public void SettingHrOnClick (View view){
 //ToDo
         this.ShowHR = !this.ShowHR;
-        scanForHRM(true);
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+        startScan();
+//        scanForHRM(true);
+//        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
     }
 
     ////////////////////////////////////////
@@ -646,5 +901,13 @@ public class MainActivity extends AppCompatActivity{
         else {
             bcbStopwatch = false;
         }
+    }
+
+    public void SearchBtDevice(View view) {
+
+        disconnectGattServer();
+        mGatt = null;
+        mHandler = new Handler();
+        startScan();
     }
 }

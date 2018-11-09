@@ -4,7 +4,7 @@ android {
     compileSdkVersion 26
     buildToolsVersion '26.0.2'
     defaultConfig {
-        applicationId "com.example.aklesoft.heartrate_monitor"
+        applicationId "com.example.aklesoft.heartrate_monitor.test"
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
@@ -20,6 +20,10 @@ android {
         }
     }
     productFlavors {
+    }
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
     }
 }
 

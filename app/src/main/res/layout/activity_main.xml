@@ -196,6 +196,13 @@
                             android:text=""
                             android:textColor="@color/cast_expanded_controller_background_color" />
 
+                        <Button
+                            android:id="@+id/HR_Reload"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Search BT Device"
+                            android:onClick="SearchBtDevice"/>
+
                     </LinearLayout>
 
                     <LinearLayout
