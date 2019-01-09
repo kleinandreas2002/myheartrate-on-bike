@@ -3,12 +3,10 @@ package com.example.aklesoft.heartrate_monitor;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
-import android.nfc.Tag;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +34,7 @@ public class BluetoothUtils {
         for (BluetoothGattCharacteristic characteristic : characteristicList) {
             Log.e(TAG, "characteristic -> " + characteristic);
             if (isMatchingCharacteristic(characteristic)) {
+                Log.e(TAG, "add characteristic -> " + characteristic);
                 matchingCharacteristics.add(characteristic);
             }
         }
