@@ -34,8 +34,8 @@ import com.google.android.gms.drive.Drive;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Places;
 
-import static com.example.aklesoft.heartrate_monitor.MainActivity.ACTION_BROADCAST_RECEIVER;
-import static com.example.aklesoft.heartrate_monitor.MainActivity.ACTION_BROADCAST_RECEIVER_DATA;
+import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER;
+import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER_DATA;
 
 
 /**
@@ -144,21 +144,16 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         bShowClock = getIntent().getExtras().getBoolean("ShowClock");
         bShowTimer = getIntent().getExtras().getBoolean("ShowTimer");
         bStartStopwatch = getIntent().getExtras().getBoolean( "StartStopwatch");
-//        HR_DeviceName = getIntent().getExtras().getString("HR_DeviceName");
-//        HR_DeviceAddress = getIntent().getExtras().getString("HR_DeviceAddress");
 
 
-//        lHRViewUnit = (LinearLayout) this.findViewById(R.id.LayoutHRViewUnit);
-//        lSpeedView = (LinearLayout) this.findViewById(R.id.SpeedViewLayout);
-//        lHRView = (LinearLayout) this.findViewById(R.id.HRViewLayout);
         Group groupSpeedView = findViewById(R.id.groupSpeedView);
         Group groupHRView = findViewById(R.id.groupHRView);
 
-        tSpeedView = (TextView) this.findViewById(R.id.SpeedView);
-        tHRView = (TextView) this.findViewById(R.id.HRView);
-        tHRPercentage = (TextView) this.findViewById(R.id.HRPercentage);
-        tClockView = (TextView) this.findViewById(R.id.ClockView);
-        tTimerView = (TextView) this.findViewById(R.id.TimerView);
+        tSpeedView = this.findViewById(R.id.SpeedView);
+        tHRView = this.findViewById(R.id.HRView);
+        tHRPercentage = this.findViewById(R.id.HRPercentage);
+        tClockView = this.findViewById(R.id.ClockView);
+        tTimerView = this.findViewById(R.id.TimerView);
 
         if(bShowSpeed) {
 

@@ -33,7 +33,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="12dp"
                 android:background="@drawable/stopwatch_selector"
-                android:onClick="SettingStopwatchOnClick"
+                android:onClick="setStopwatchOnClick"
                 android:padding="12dp"
                 android:textOff=""
                 android:textOn="" />
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="12dp"
                 android:background="@drawable/speedometer_selector"
-                android:onClick="SettingSpeedOnClick"
+                android:onClick="setSpeedOnClick"
                 android:padding="12dp"
                 android:textOff=""
                 android:textOn="" />
@@ -131,7 +131,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/heartshape_selector"
-                    android:onClick="SettingHrOnClick"
+                    android:onClick="setHrOnClick"
                     android:padding="12dp"
                     android:textOff=""
                     android:textOn=""
@@ -177,48 +177,15 @@
                     android:id="@+id/HR_Status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/tHR_Status"
+                    android:text=""
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/HR_Device"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:baselineAligned="false">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/HR_Device"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text=""
-                            android:textColor="@color/cast_expanded_controller_background_color" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical">
-
-                        <ImageButton
-                            android:id="@+id/ResetDevice"
-                            android:layout_width="wrap_content"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"
-                            android:background="?android:attr/selectableItemBackgroundBorderless"
-                            android:onClick="ResetDevice"
-                            android:visibility="gone"
-                            app:srcCompat="@drawable/reset_button_selector" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="@color/cast_expanded_controller_background_color" />
 
             </LinearLayout>
 
@@ -240,7 +207,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="12dp"
                 android:background="@drawable/clock_selector"
-                android:onClick="SettingClockOnClick"
+                android:onClick="setClockOnClick"
                 android:padding="12dp"
                 android:textOff=""
                 android:textOn="" />
