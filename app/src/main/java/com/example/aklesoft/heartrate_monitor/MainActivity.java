@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -15,8 +16,10 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -29,6 +32,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -43,7 +47,6 @@ import java.util.UUID;
 
 
 import static com.example.aklesoft.heartrate_monitor.Constants.CHARACTERISTIC_ECHO_STRING;
-import static com.example.aklesoft.heartrate_monitor.Constants.SERVICE_UUID;
 import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
 
 
@@ -52,6 +55,8 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     public static String HEART_RATE_MEASUREMENT = "0000180d-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
 
+    public static String ACTION_BROADCAST_RECEIVER = "com.example.aklesoft.heartrate_monitor.RECEIVER";
+    public static String ACTION_BROADCAST_RECEIVER_DATA = "com.example.aklesoft.heartrate_monitor.DATA";
     //  UUIDs
     static final UUID HEART_RATE_SERVICE_UUID = convertFromInteger(0x180D);
     static final UUID HEART_RATE_MEASUREMENT_CHAR_UUID = convertFromInteger(0x2A37);
@@ -73,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     private ScanSettings settings;
     private List<ScanFilter> filters;
     private BluetoothGatt mGatt;
+    private GattClientCallback gattClientCallback = null;
 //    private ScanCallback mScanCallback;
 
     //    private BluetoothLeService mBluetoothLeService;
@@ -110,7 +116,8 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     private ToggleButton SettingClockView;
     private ToggleButton SettingTimerView;
 
-//  CheckBox
+
+    //  CheckBox
     private CheckBox cbStopwatch;
     private boolean bcbStopwatch;
 
@@ -155,8 +162,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_SERVICE_UUID)).build());
         filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_MEASUREMENT_CHAR_UUID)).build());
 
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
 
         SettingSpeedView = (ToggleButton) findViewById(R.id.SettingSpeedView);
@@ -191,14 +197,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         if( bcbStopwatch ) {
             cbStopwatch.setChecked(bcbStopwatch);
         }
-        mDeviceAddress = pref.getString("deviceAddress", null);
-        mDeviceName = pref.getString("deviceName", null);
-
-        if( mDeviceName != null && mDeviceAddress != null ){
-            ibResetDevice.setVisibility(View.VISIBLE);
-            setHRStatus("Found stored device");
-            setHRDevice(mDeviceName);
-        }
+        getSaveDevice(pref);
 
         SettingSpeedView.setChecked(ShowSpeed);
         SettingHRView.setChecked(ShowHR);
@@ -208,14 +207,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
         tipWindow = new TooltipWindow(MainActivity.this);
         MainView = (LinearLayout) findViewById(R.id.MainView);
-//        MainView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Toast.makeText(MainActivity.this, "Swipe To Right To Start BlackMode", Toast.LENGTH_SHORT).show();
-//                if (!tipWindow.isTooltipShown())
-//                    tipWindow.showToolTip(v);
-//            }
-//        });
+
         MainView.setOnTouchListener(new OnSwipeTouchListener(MainActivity.this) {
             public void onSwipeTop() {
 //                Toast.makeText(MainActivity.this, "top", Toast.LENGTH_SHORT).show();
@@ -303,28 +295,20 @@ public class MainActivity extends AppCompatActivity implements Serializable {
             if(mBluetoothAdapter.isEnabled()){
                 tBT_status.setText("Bluetooth enabled");
             }
+
+
+            Log.e(TAG, "registerReceiver");
+            registerReceiver(broadcastReceiver, broadcastReceiverUpdateIntentFilter());
+//            Log.e(TAG, "sendBroadcastIntent()");
+//            sendBroadcastIntent();
             startScan();
 
         }
     }
 
-//    private static IntentFilter makeGattUpdateIntentFilter() {
-//
-//        final IntentFilter intentFilter = new IntentFilter();
-//
-//        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-//        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-//        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-//        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-//
-//        return intentFilter;
-//
-//    }
 
     private void startScan() {
         Log.e(TAG, "onResume -> Start BT work");
-
-
 
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -337,8 +321,6 @@ public class MainActivity extends AppCompatActivity implements Serializable {
                         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                         .build();
 
-//                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE_UUID)).build());
-//                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_CONTROL_POINT_CHAR_UUID)).build());
             }
 
             Log.e(TAG, "onResume -> scanLeDevice");
@@ -360,98 +342,38 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     }
 
     private void stopScan() {
-        if (mScanning && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && mLeScanner != null) {
+        Log.e(TAG, "Stopped scanning.");
+        if (mScanning && (mLeScanner != null || mBluetoothAdapter != null) && mBluetoothAdapter.isEnabled()) {
 
+            Log.e(TAG, "Stopped scanning -> cancelDiscovery()");
             mBluetoothAdapter.cancelDiscovery();
+            Log.e(TAG, "Stopped scanning -> mLeScanner.stopScan(mScanCallback)");
             mLeScanner.stopScan(mScanCallback);
         }
-
+        
         mScanning = false;
-        mHandler = null;
-        Log.e(TAG, "Stopped scanning.");
+//        mHandler = null;
     }
 
 
-//    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//
-//            final String action = intent.getAction();
-//
-//            Log.i(TAG, "BTS Callback action: " + action);
-//
-//            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-//                tHR_Data.setText("...");
-//                Log.e(TAG, "...");
-//
-//                //ToDo
-//            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-////                setActivityState(MODE_DISCONNECTED);
-//                Log.e(TAG, "...disconnected...");
-//                tHR_Data.setText("");
-//
-//                //ToDo
-//            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-//                //ToDo
-//                if (mBluetoothLeService != null) {
-//                    Log.e(TAG, "...process...");
-//                    tHR_Data.setText("...process...");
-////                    turnHRMNotification();
-//                }
-//
-//            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-//                Log.i(TAG, "HRM: action:" + action);
-//                Log.i(TAG, "HRM: " + intent.getExtras().getString(mBluetoothLeService.EXTRA_DATA));
-//                setHrValues(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
-//                setHrData(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
-////                viewProgress.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
-////                viewGauge.updateHrValue(Integer.valueOf(intent.getStringExtra(mBluetoothLeService.EXTRA_DATA)));
-////                viewChart.invalidate();
-//
-//                //ToDo
-//            }
-//
-//        }
-//    };
 
-//    public void turnHRMNotification() {
-//        Log.i(TAG, "Trying turn on HRM notifications");
-//        if (mGatt == null || mGatt.getServices() == null) {
-//            Log.i(TAG, "Error while accessing gatt services");
-//            return;
-//        }
-//        for (BluetoothGattService gattService : mGatt.getServices()) {
-//
-//            for(BluetoothGattCharacteristic gattCharacteristic : gattService.getCharacteristics()) {
-//                Log.i(TAG, "HRM service found");
-//                mBluetoothLeService.readCharacteristic(gattCharacteristic);
-//                gattCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-//                mBluetoothLeService.setCharacteristicNotification(gattCharacteristic, true);
-//
-//            }
-//
-//        }
-//
-//    }
-
-    public void setHrValues(int hrData) {
-        tHR_Status.setText(Integer.toString(hrData));
-//        int iPercentage = (int) ((hrData*100.0f)/195);
-//        int iPercentage = (int) fPercentage;
-//        tHRPercentage.setText(Integer.toString(iPercentage));
-    }
 
     @Override
     protected void onPause(){
         super.onPause();
 
         if(ShowHR) {
-            if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
+            if( (mLeScanner != null || mBluetoothAdapter != null) && mBluetoothAdapter.isEnabled()) {
                 scanLeDevice(false);
             }
 
-//            unbindService(mServiceConnection);
-//            unregisterReceiver(mGattUpdateReceiver);
+            try {
+                unregisterReceiver(broadcastReceiver);
+            }
+            catch (Exception e){
+                Log.e(TAG, "broadcastReceiver wasn't registered!");
+            }
+
 
         }
     }
@@ -465,29 +387,6 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         }
     }
 
-//    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-//        @Override
-//
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-//
-//            if (mBluetoothLeService.isRunning) {
-////                switchConnection.setChecked(true);
-//                Log.e(TAG, "Reading Heart Rate");
-////                labelStatus.setText("Reading Heart Rate");
-////                labelValue.setText("...");
-//            }
-//            if (!mBluetoothLeService.initialize()) {
-//                Log.e(TAG, "Unable to initialize Bluetooth");
-//                finish();
-//            }
-//        }
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-//            mBluetoothLeService = null;
-//        }
-//    };
-
     @Override
     public void onStop() {
         super.onStop();
@@ -495,6 +394,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         mHandler = null;
 
         Log.e(TAG, "onStop -> SharedPreferences -> this.ShowHR:"+this.ShowHR);
+        setSaveDevice(mGatt.getDevice());
         editor = pref.edit();
         editor.putBoolean("ShowSpeed", this.ShowSpeed);
         editor.putBoolean("ShowHR", this.ShowHR);
@@ -502,8 +402,6 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         editor.putBoolean("ShowClock", this.ShowClock);
         editor.putBoolean("StartStopwatch", this.bcbStopwatch);
         editor.commit();
-
-
     }
 
     @Override
@@ -511,8 +409,8 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         super.onDestroy();
 
         if(ShowHR) {
-
             disconnectGattServer(mGatt);
+            mGatt = null;
         }
 
 
@@ -546,17 +444,6 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
     private void scanLeDevice(final boolean enable) {
         if (enable) {
-//            mHandler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    if (Build.VERSION.SDK_INT < 21) {
-//                        mBluetoothAdapter.stopLeScan(mLeScanCallback);
-//                    } else {
-//                        Log.e(TAG, "scanLeDevice 1-> stopScan");
-//                        mLeScanner.stopScan(mScanCallback);
-//                    }
-//                }
-//            }, SCAN_PERIOD);
             if (Build.VERSION.SDK_INT < 21) {
                 mBluetoothAdapter.startLeScan(mLeScanCallback);
             } else {
@@ -599,34 +486,32 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     };
 
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback() {
+            (device, rssi, scanRecord) -> runOnUiThread(new Runnable() {
                 @Override
-                public void onLeScan(final BluetoothDevice device, int rssi,
-                                     byte[] scanRecord) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.i("onLeScan", device.toString());
-                            connectToDevice(device);
-                        }
-                    });
+                public void run() {
+                    Log.d("onLeScan", device.toString());
+                    connectToDevice(device);
                 }
-            };
+            });
 
     public void connectToDevice(BluetoothDevice device) {
 
         tHR_Status.setText(device+" connecting");
-        GattClientCallback gattClientCallback = new GattClientCallback();
-        mGatt = device.connectGatt(this,true,gattClientCallback);
-//        nnectGatt(this, true, gattClientCallback);
+        if( gattClientCallback == null) {
+            gattClientCallback = new GattClientCallback();
+        }
+        mGatt = device.connectGatt(this,false, gattClientCallback);
+
         Log.e(TAG, "connectToDevice -> mGatt -> "+mGatt.getDevice());
 
         if( mGatt.connect() ){
-            tHR_Status.setText(device.getName()+" connected");
+            tHR_Status.setText(getResources().getString(R.string.device_connected));
             Log.e(TAG, "connectToDevice -> scanLeDevice -> false");
             scanLeDevice(false);// will stop after first device detection
+
         }
         else{
+            gattClientCallback = null;
             Log.e(TAG, "connectToDevice -> mGatt.connect() -> false");
         }
 
@@ -638,28 +523,30 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
-            Log.e(TAG, "onConnectionStateChange status: " + status);
-            Log.e(TAG, "onConnectionStateChange newState: " + newState);
+            Log.d(TAG, "onConnectionStateChange status: " + status);
+            Log.d(TAG, "onConnectionStateChange newState: " + newState);
 
 
             if (status == BluetoothGatt.GATT_FAILURE) {
                 Log.e(TAG, "Connection Gatt failure status " + status);
                 disconnectGattServer(gatt);
-                return;
+                gatt = null;
+
             } else if (status != BluetoothGatt.GATT_SUCCESS) {
                 // handle anything not SUCCESS as failure
                 Log.e(TAG, "Connection not GATT sucess status " + status);
                 disconnectGattServer(gatt);
-                return;
+                gatt = null;
             }
 
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.e(TAG, "Connected to device " + gatt.getDevice().getAddress());
-
+                Log.d(TAG, "Connected to device " + gatt.getDevice().getAddress());
+                
                 gatt.discoverServices();
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.e(TAG, "Disconnected from device");
+
                 disconnectGattServer(gatt);
             }
         }
@@ -673,22 +560,18 @@ public class MainActivity extends AppCompatActivity implements Serializable {
                 return;
             }
 
-            Log.e(TAG, "onServicesDiscovered ->"+gatt);
+            Log.d(TAG, "onServicesDiscovered ->"+gatt);
             List<BluetoothGattCharacteristic> matchingCharacteristics = BluetoothUtils.findCharacteristics(gatt);
             if (matchingCharacteristics.isEmpty()) {
                 Log.e(TAG, "Unable to find characteristics.");
                 return;
             }
 
-            Log.e(TAG, "Initializing: setting write type and enabling notification");
+            Log.d(TAG, "Initializing: setting write type and enabling notification");
             for (BluetoothGattCharacteristic characteristic : matchingCharacteristics) {
                 characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                 enableCharacteristicNotification(gatt, characteristic);
                 readCharacteristic(characteristic);
-
-//                mBluetoothLeService.readCharacteristic(gattCharacteristic);
-//                gattCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-//                mBluetoothLeService.setCharacteristicNotification(gattCharacteristic, true);
 
             }
         }
@@ -697,7 +580,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.e(TAG, "Characteristic written successfully");
+                Log.d(TAG, "Characteristic written successfully");
 
             } else {
                 Log.e(TAG, "Characteristic write unsuccessful, status: " + status);
@@ -709,7 +592,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.e(TAG, "Characteristic read successfully");
+                Log.d(TAG, "Characteristic read successfully");
                 readCharacteristic(characteristic);
             } else {
                 Log.e(TAG, "Characteristic read unsuccessful, status: " + status);
@@ -722,25 +605,27 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
-            Log.e(TAG, "Characteristic changed, " + characteristic.getUuid().toString());
+            Log.d(TAG, "Characteristic changed, " + characteristic.getUuid().toString());
             readCharacteristic(characteristic);
         }
 
         private void enableCharacteristicNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             boolean characteristicWriteSuccess = gatt.setCharacteristicNotification(characteristic, true);
             if (characteristicWriteSuccess) {
-                Log.e(TAG, "Characteristic notification set successfully for " + characteristic.getUuid().toString());
+                Log.d(TAG, "Characteristic notification set successfully for " + characteristic.getUuid().toString());
 
 // This is specific to Heart Rate Measurement.
-                Log.e(TAG, "CHARACTERISTIC_ECHO_STRING " + CHARACTERISTIC_ECHO_STRING);
-                Log.e(TAG, "characteristic.getUuid()   " + characteristic.getUuid());
+                Log.d(TAG, "CHARACTERISTIC_ECHO_STRING " + CHARACTERISTIC_ECHO_STRING);
+                Log.d(TAG, "characteristic.getUuid()   " + characteristic.getUuid());
 
                 if (CHARACTERISTIC_ECHO_STRING.equalsIgnoreCase(characteristic.getUuid().toString())) {
                     BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                             UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
-                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    boolean return_value = gatt.writeDescriptor(descriptor);
-                    Log.e(TAG, "writeDescriptor -> " + return_value);
+                    if(descriptor != null) {
+                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                        boolean return_value = gatt.writeDescriptor(descriptor);
+                        Log.d(TAG, "writeDescriptor -> " + return_value);
+                    }
 
                 }
 //                if (BluetoothUtils.isEchoCharacteristic(characteristic)) {
@@ -770,9 +655,15 @@ public class MainActivity extends AppCompatActivity implements Serializable {
                     Log.d(TAG, "Heart rate format UINT8.");
                 }
                 final int heartRate = characteristic.getIntValue(format, 1);
-                Log.e(TAG, String.format("Received heart rate: %d", heartRate));
+                Log.d(TAG, String.format("Received heart rate: %d", heartRate));
 
-//              Log.e(TAG, "Received message: " + message);
+//              Log.d(TAG, "Received message: " + message);
+
+                final Intent intent = new Intent(ACTION_BROADCAST_RECEIVER_DATA);
+                intent.putExtra(ACTION_BROADCAST_RECEIVER_DATA, String.valueOf(heartRate));
+                intent.setAction(ACTION_BROADCAST_RECEIVER);
+//                Log.e(TAG, "get null from messageBytes"+ intent.getAction());
+                sendBroadcast(intent);
                 setHrData(heartRate);
             }
             catch (Exception e){
@@ -785,66 +676,63 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
 
     public void disconnectGattServer(BluetoothGatt gatt ) {
-        Log.e(TAG, "Closing Gatt connection");
 
+        
         if (gatt != null) {
+            Log.e(TAG, "Closing Gatt connection");
+
+            gatt.abortReliableWrite();
             gatt.disconnect();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
+            }
             gatt.close();
         }
     }
 
-////////////////////////////////////
-//  Bluetooth Adapter initializing
-//  true = start from onStart()
-//  false = start from ButtonListener
-//    public void BluetoothAdapter_Initialize(boolean checkOnActivityStart){
-//
-//        if (mBluetoothAdapter == null) {
-//            stateBluetooth = "Bluetooth NOT supported";
-//        } else {
-//            if (mBluetoothAdapter.isEnabled()) {
-//                if (mBluetoothAdapter.isDiscovering()) {
-//                    stateBluetooth = "Bluetooth is currently in device discovery process.";
-//                } else {
-//                    stateBluetooth = "Bluetooth is Enabled.";
-//                }
-//            } else {
-//                stateBluetooth = "Bluetooth is NOT Enabled!";
-//
-//                if(checkOnActivityStart) {
-//                    mBluetoothAdapter.enable();
-//                    stateBluetooth = "Bluetooth is Enabled.";
-//                }
-//            }
-//        }
-//        TextView bt_status = (TextView) findViewById(R.id.BT_Status);
-//        bt_status.setText(stateBluetooth);
-//    }
+    public IntentFilter broadcastReceiverUpdateIntentFilter() {
+
+        final IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction(ACTION_BROADCAST_RECEIVER);
+
+        return intentFilter;
+    }
+
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().equals(ACTION_BROADCAST_RECEIVER)){
+// ONLY for DEBUGGING
+//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: "+ intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA)));
+//                intent.putExtra(ACTION_BROADCAST_RECEIVER_DATA, intent.getAction().equals(ACTION_BROADCAST_RECEIVER_DATA));
+            }
+        }
+    };
+
 
 
 ////////////////////////////////////////
 //  Set button for Blackmode
     public void GoToBlackMode() {
-//        Intent myIntent = new Intent(getApplicationContext(), BlackMode.class);
-//        myIntent.putExtra("ShowSpeed", this.ShowSpeed);
-//        myIntent.putExtra("ShowHR", this.ShowHR);
-//        myIntent.putExtra("ShowTimer", this.ShowTimer);
-//        myIntent.putExtra("ShowClock", this.ShowClock);
-//        myIntent.putExtra( "HR_DeviceName", this.HR_DeviceName);
-//        myIntent.putExtra( "HR_DeviceAddress", this.HR_DeviceAddress);
-//        myIntent.putExtra( "StartStopwatch", this.bcbStopwatch);
-//        if (mScanning) {
-//            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-//            mScanning = false;
-//        }
-//
-//
-//        startActivity(myIntent);
+        Intent myIntent = new Intent(getApplicationContext(), BlackMode.class);
+        myIntent.putExtra("ShowSpeed", this.ShowSpeed);
+        myIntent.putExtra("ShowHR", this.ShowHR);
+        myIntent.putExtra("ShowTimer", this.ShowTimer);
+        myIntent.putExtra("ShowClock", this.ShowClock);
+        myIntent.putExtra( "HR_DeviceName", this.HR_DeviceName);
+        myIntent.putExtra( "HR_DeviceAddress", this.HR_DeviceAddress);
+        myIntent.putExtra( "HRData", this.HRStartData);
+        myIntent.putExtra( "StartStopwatch", this.bcbStopwatch);
+
+        startActivity(myIntent);
         Log.d("\">>>>>>>>AKL <1> : ", "" );
     }
 
 
-    private void saveDevice(BluetoothDevice device) {
+    private void setSaveDevice(BluetoothDevice device) {
         SharedPreferences settings = getSharedPreferences("Heartrate_Monitor", 0);
         SharedPreferences.Editor editor = settings.edit();
 
@@ -852,15 +740,19 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         editor.putString("deviceName", device.getName());
 
         editor.commit();
-
-        if( device.getAddress() != null && device.getName() != null) {
-            ibResetDevice.setVisibility(View.VISIBLE);
-            setHRStatus("Found stored device");
-            setHRDevice(device.getName());
-        }
-
     }
 
+    private void getSaveDevice(SharedPreferences pref) {
+
+        mDeviceAddress = pref.getString("deviceAddress", null);
+        mDeviceName = pref.getString("deviceName", null);
+
+        if( mDeviceName != null && mDeviceAddress != null ){
+            ibResetDevice.setVisibility(View.VISIBLE);
+            setHRStatus("Found stored device");
+            setHRDevice(mDeviceName);
+        }
+    }
 
     ////////////////////////////////////////
 //  Set toggle button for Speed TextView
@@ -874,8 +766,22 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 //  Set toggle button for Speed TextView
     public void SettingHrOnClick (View view){
 //ToDo
+        Log.d(TAG, String.format("SettingHrOnClick -> state ->: %b", this.ShowHR));
+
+        if(this.ShowHR){
+            Log.d(TAG, String.format("SettingHrOnClick -> state -> 1 "));
+        }
+
+        if(!this.ShowHR){
+            if( (mLeScanner != null || mBluetoothAdapter != null)) {
+                Log.d(TAG, String.format("SettingHrOnClick -> state -> 2 "));
+                startScan();
+            }
+        }
+
         this.ShowHR = !this.ShowHR;
-        startScan();
+
+
 //        scanForHRM(true);
 //        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
     }
@@ -917,15 +823,5 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         }
     }
 
-    public void SearchBtDevice(View view) {
 
-//        if(mGatt.getServices() != null) {
-//            disconnectGattServer(mGatt);
-//        }
-        if( mHandler == null ) {
-            mHandler = new Handler();
-        }
-        startScan();
-
-    }
 }

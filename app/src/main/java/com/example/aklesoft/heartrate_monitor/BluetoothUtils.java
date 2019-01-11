@@ -35,7 +35,9 @@ public class BluetoothUtils {
             Log.e(TAG, "characteristic -> " + characteristic);
             if (isMatchingCharacteristic(characteristic)) {
                 Log.e(TAG, "add characteristic -> " + characteristic);
-                matchingCharacteristics.add(characteristic);
+                if( !matchingCharacteristics.contains(matchingCharacteristics)) {
+                    matchingCharacteristics.add(characteristic);
+                }
             }
         }
 

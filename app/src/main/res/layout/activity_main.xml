@@ -13,12 +13,14 @@
 
     <LinearLayout
         android:id="@+id/MainView"
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="32dp"
         android:clickable="true"
-        android:focusable="true">
+        android:focusable="true"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -29,12 +31,12 @@
                 android:id="@+id/SettingStopWatchView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/stopwatch_selector"
-                android:padding="12dp"
                 android:layout_margin="12dp"
+                android:background="@drawable/stopwatch_selector"
+                android:onClick="SettingStopwatchOnClick"
+                android:padding="12dp"
                 android:textOff=""
-                android:textOn=""
-                android:onClick="SettingStopwatchOnClick"/>
+                android:textOn="" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -44,19 +46,19 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:text="@string/tStopwatch"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="12dp"/>
+                    android:textStyle="bold" />
 
                 <CheckBox
                     android:id="@+id/cbStopwatch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:onClick="setcbStopwatch"
                     android:text="@string/cbStopwatch"
-                    android:theme="@style/MyCheckBoxes"
-                    android:onClick="setcbStopwatch"/>
+                    android:theme="@style/MyCheckBoxes" />
 
             </LinearLayout>
 
@@ -76,12 +78,12 @@
                 android:id="@+id/SettingSpeedView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/speedometer_selector"
-                android:padding="12dp"
                 android:layout_margin="12dp"
+                android:background="@drawable/speedometer_selector"
+                android:onClick="SettingSpeedOnClick"
+                android:padding="12dp"
                 android:textOff=""
-                android:textOn=""
-                android:onClick="SettingSpeedOnClick"/>
+                android:textOn="" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -91,11 +93,11 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:text="@string/tSpeedometer"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="12dp"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/GPS_Status"
@@ -158,11 +160,11 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:text="@string/tHeartrate"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="12dp"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/BT_Status"
@@ -171,23 +173,24 @@
                     android:text="@string/tBT_Status"
                     android:textColor="@color/cast_expanded_controller_background_color" />
 
+                <TextView
+                    android:id="@+id/HR_Status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tHR_Status"
+                    android:textColor="@color/cast_expanded_controller_background_color" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:baselineAligned="false">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/HR_Status"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tHR_Status"
-                            android:textColor="@color/cast_expanded_controller_background_color" />
 
                         <TextView
                             android:id="@+id/HR_Device"
@@ -195,13 +198,6 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             android:textColor="@color/cast_expanded_controller_background_color" />
-
-                        <Button
-                            android:id="@+id/HR_Reload"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Search BT Device"
-                            android:onClick="SearchBtDevice"/>
 
                     </LinearLayout>
 
@@ -213,7 +209,7 @@
                         <ImageButton
                             android:id="@+id/ResetDevice"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="0dp"
                             android:layout_weight="1"
                             android:background="?android:attr/selectableItemBackgroundBorderless"
                             android:onClick="ResetDevice"
@@ -242,12 +238,12 @@
                 android:id="@+id/SettingClockView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/clock_selector"
-                android:padding="12dp"
                 android:layout_margin="12dp"
+                android:background="@drawable/clock_selector"
+                android:onClick="SettingClockOnClick"
+                android:padding="12dp"
                 android:textOff=""
-                android:textOn=""
-                android:onClick="SettingClockOnClick"/>
+                android:textOn="" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -257,11 +253,11 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:text="@string/tClock"
                     android:textColor="@color/cast_expanded_controller_background_color"
                     android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="12dp"/>
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
