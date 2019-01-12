@@ -1,14 +1,22 @@
 <resources>
-    <string name="app_name">Bike Computer</string>
+    <string name="app_name">TEST Bike Computer</string>
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="label_data">Data:</string>
     <string name="label_device_address">Device address:</string>
     <string name="label_state">State:</string>
     <string name="no_data">No data</string>
+    <string name="device_connected">Device connected</string>
+    <string name="device_disconnected">Device disconnected</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
     <string name="title_devices">BLE Device Scan</string>
     <string name="error_bluetooth_not_supported">Bluetooth not supported.</string>
+    <string name="gps_enabled">GPS enabled</string>
+    <string name="bluetooth_enabled">Bluetooth enabled</string>
+    <string name="connecting">connecting</string>
+    <string name="scan_for_devices">Scan for devices</string>
+    <string name="scan_stopped">Scan stopped</string>
+
 
     <string name="unknown_device">Unknown device</string>
     <string name="unknown_characteristic">Unknown characteristic</string>
@@ -21,14 +29,14 @@
     <string name="menu_stop">Stop</string>
 
     <!-- Layout items -->
-    <string name="cbStopwatch">Start Stopwatch automatically</string>
+    <string name="cbStopwatch">Start automatically</string>
     <string name="tStopwatch">Stopwatch</string>
     <string name="tSpeedometer">Speedometer</string>
     <string name="tGPS_Status">GPS disabled</string>
     <string name="tHeartrate">Heartrate</string>
     <string name="tBT_Status">Bluetooth disabled</string>
-    <string name="tHR_Status">No Device found</string>
     <string name="tClock">Clock</string>
+    <string name="tBlackMode">BlackMode</string>
     <string name="tHRViewData">--</string>
     <string name="tHRView">bpm</string>
     <string name="tHRPercentage">%</string>
