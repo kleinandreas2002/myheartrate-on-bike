@@ -721,7 +721,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
     ////////////////////////////////////////
 //  updates the UI stuff
-    private void setTextFieldTexts(TextView textview, String string) {
+    public void setTextFieldTexts(TextView textview, String string) {
         runOnUiThread(() -> textview.setText(string));
     }
 
