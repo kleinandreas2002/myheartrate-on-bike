@@ -33,7 +33,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -86,10 +89,18 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     public TextView tGPS_Status;
     public TextView tBT_status;
 
+    // RadioGroup and RadioButton
+    RadioGroup radioGroup;
+    RadioButton radioPortrait;
+    RadioButton radioLandscape;
+    RadioButton radioRotation;
+
     //  LinearLayout
-    private LinearLayout MainView;
+    private RelativeLayout MainView;
     TooltipWindow tipWindow;
 
+    // ProgressBar
+    private ProgressBar progressBar;
 
     //  CheckBox
     private CheckBox cbStopwatch;
@@ -100,8 +111,10 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     private boolean ShowHR;
     private boolean ShowClock;
     private boolean ShowTimer;
+    private int blackModeOrientation;
+    private int selectedRadioButtonID;
 
-//  save settings
+    //  save settings
     SharedPreferences pref;
     SharedPreferences.Editor editor;
 
@@ -146,6 +159,12 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         ToggleButton SettingClockView = (ToggleButton) findViewById(R.id.SettingClockView);
         ToggleButton SettingTimerView = (ToggleButton) findViewById(R.id.SettingStopWatchView);
 
+        // RadioGroup and RadioButtons
+        radioGroup = (RadioGroup) findViewById(R.id.displayGroup);
+        radioPortrait = (RadioButton) findViewById(R.id.radioPortrait);
+        radioLandscape = (RadioButton) findViewById(R.id.radioLandscape);
+        radioRotation = (RadioButton) findViewById(R.id.radioRotation);
+
         tHR_Status = (TextView) findViewById(R.id.HR_Status);
         tHR_Data = (TextView) findViewById(R.id.HR_Data);
         tHR_Device = (TextView) findViewById(R.id.HR_Device);
@@ -157,16 +176,23 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         tBT_status = (TextView) findViewById(R.id.BT_Status);
         Log.d(TAG, "onCreate -> BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBLA");
 
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+
         if(mBluetoothAdapter.isEnabled()){
-            tBT_status.setText(getResources().getString(R.string.bluetooth_enabled));
+            setTextFieldTexts(tBT_status, getResources().getString(R.string.bluetooth_enabled));
         }
 
 //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
-        ShowSpeed = pref.getBoolean("ShowSpeed", false);
-        ShowHR = pref.getBoolean("ShowHR", false);
-        ShowClock = pref.getBoolean("ShowClock", false);
-        ShowTimer = pref.getBoolean("ShowTimer", false);
+        this.ShowSpeed = pref.getBoolean("ShowSpeed", false);
+        this.ShowHR = pref.getBoolean("ShowHR", false);
+        this.ShowClock = pref.getBoolean("ShowClock", false);
+        this.ShowTimer = pref.getBoolean("ShowTimer", false);
+        this.selectedRadioButtonID = pref.getInt("BlackModeOrientation", 0);
+        Log.d(TAG, "onCreate -> SharedPreferences -> selectedRadioButtonID:"+pref.getAll());
+
+        Log.d(TAG, "onCreate -> SharedPreferences -> selectedRadioButtonID:"+this.selectedRadioButtonID);
+
         editor = pref.edit();
         editor.apply();
 
@@ -174,14 +200,14 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         bcbStopwatch = pref.getBoolean("StartStopwatch", false);
         cbStopwatch.setChecked(bcbStopwatch);
 
-        SettingSpeedView.setChecked(ShowSpeed);
-        SettingHRView.setChecked(ShowHR);
-        SettingClockView.setChecked(ShowClock);
-        SettingTimerView.setChecked(ShowTimer);
-
+        SettingSpeedView.setChecked(this.ShowSpeed);
+        SettingHRView.setChecked(this.ShowHR);
+        SettingClockView.setChecked(this.ShowClock);
+        SettingTimerView.setChecked(this.ShowTimer);
+        radioGroup.check(this.selectedRadioButtonID);
 
         tipWindow = new TooltipWindow(MainActivity.this);
-        MainView = (LinearLayout) findViewById(R.id.MainView);
+        MainView = (RelativeLayout) findViewById(R.id.activity_main);
 
         MainView.setOnTouchListener(new OnSwipeTouchListener(MainActivity.this) {
             public void onSwipeTop() {
@@ -219,16 +245,16 @@ public class MainActivity extends AppCompatActivity implements Serializable {
             mHandler = new Handler();
         }
 
-        if(ShowSpeed) {
+        if(this.ShowSpeed) {
                 LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                 if (locationManager == null) throw new AssertionError("Object cannot be null");
                 if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                 {
-                    tGPS_Status.setText(getResources().getString(R.string.gps_enabled));
+                    setTextFieldTexts(tGPS_Status, getResources().getString(R.string.gps_enabled));
                 }
         }
 
-        if(ShowHR) {
+        if(this.ShowHR) {
             Log.e(TAG, "registerReceiver");
             registerReceiver(broadcastReceiver, broadcastReceiverUpdateIntentFilter());
             startScan();
@@ -239,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     private void startScan() {
         Log.e(TAG, "onResume -> Start BT work");
 
-        tHR_Status.setText(getResources().getString(R.string.scan_for_devices));
+        setTextFieldTexts(tHR_Status, getResources().getString(R.string.scan_for_devices));
 
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -273,13 +299,11 @@ public class MainActivity extends AppCompatActivity implements Serializable {
             mBluetoothAdapter.cancelDiscovery();
             Log.e(TAG, "Stopped scanning -> mLeScanner.stopScan(mScanCallback)");
             mLeScanner.stopScan(mScanCallback);
-            tHR_Status.setText(getResources().getString(R.string.scan_stopped));
+            setTextFieldTexts(tHR_Status, getResources().getString(R.string.scan_stopped));
         }
         
         mScanning = false;
-        if(!mScanning){
-
-        }
+        progressBar.setVisibility(View.VISIBLE);
     }
 
 
@@ -287,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     protected void onPause(){
         super.onPause();
 
-        if(ShowHR) {
+        if(this.ShowHR) {
             if( (mLeScanner != null || mBluetoothAdapter != null) && mBluetoothAdapter.isEnabled()) {
                 scanLeDevice(false);
             }
@@ -315,21 +339,24 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
         mHandler = null;
 
-        Log.d(TAG, "onStop -> SharedPreferences -> this.ShowHR:"+this.ShowHR);
         editor = pref.edit();
         editor.putBoolean("ShowSpeed", this.ShowSpeed);
         editor.putBoolean("ShowHR", this.ShowHR);
         editor.putBoolean("ShowTimer", this.ShowTimer);
         editor.putBoolean("ShowClock", this.ShowClock);
         editor.putBoolean("StartStopwatch", this.bcbStopwatch);
-        editor.apply();
+        editor.putInt("BlackModeOrientation", this.selectedRadioButtonID);
+
+// ignore the warning, because editor.apply() doesn't give me the correct preferences back on next application start
+        editor.commit();
+//        Log.d(TAG, "onStop -> SharedPreferences -> pref.getAll():"+pref.getAll());
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
-        if(ShowHR) {
+        if(this.ShowHR) {
             disconnectGattServer(mGatt);
             mGatt = null;
         }
@@ -341,10 +368,11 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         Thread.enumerate(threads);
         for (Thread t : threads) {
             if (t.isAlive()) {
-                Log.e(TAG, "onDestroy -> thread interrupt -> "+t);
+//                Log.d(TAG, "onDestroy -> thread interrupt -> "+t);
                 t.interrupt();
             }
         }
+        Log.d(TAG, "onDestroy -> threads interrupted -> ");
 
         System.exit(0);
 
@@ -429,7 +457,8 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
         if(paired){
             String text = device+" "+getResources().getString(R.string.connecting);
-            tHR_Status.setText(text);
+            setTextFieldTexts(tHR_Status, text);
+
             if( gattClientCallback == null) {
                 gattClientCallback = new GattClientCallback();
             }
@@ -438,8 +467,11 @@ public class MainActivity extends AppCompatActivity implements Serializable {
             Log.e(TAG, "connectToDevice -> mGatt -> "+mGatt.getDevice());
 
             if( mGatt.connect() ){
-                tHR_Status.setText(getResources().getString(R.string.device_connected));
-                tHR_Device.setText(device.getName());
+                setTextFieldTexts(tHR_Status, getResources().getString(R.string.device_connected));
+                setTextFieldTexts(tHR_Device, device.getName());
+
+                progressBar.setVisibility(View.GONE);
+
                 Log.e(TAG, "connectToDevice -> scanLeDevice -> false");
                 scanLeDevice(false);// will stop after first device detection
 
@@ -454,6 +486,8 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         }
 
     }
+
+
 
     private class GattClientCallback extends BluetoothGattCallback {
         @Override
@@ -625,10 +659,12 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 //                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
             }
             gatt.close();
-            tHR_Status.setText(getResources().getString(R.string.device_disconnected));
-            tHR_Device.setText("");
+            setTextFieldTexts(tHR_Status, getResources().getString(R.string.device_disconnected));
+            setTextFieldTexts(tHR_Device, "");
+
         }
     }
+
 
     public IntentFilter broadcastReceiverUpdateIntentFilter() {
 
@@ -662,39 +698,31 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         myIntent.putExtra("ShowTimer", this.ShowTimer);
         myIntent.putExtra("ShowClock", this.ShowClock);
         myIntent.putExtra( "StartStopwatch", this.bcbStopwatch);
+        myIntent.putExtra( "BlackModeOrientation", this.blackModeOrientation);
 
         startActivity(myIntent);
-        Log.d("\">>>>>>>>AKL <1> : ", "" );
+//        Log.d("\">>>>>>>>AKL <1> : ", "" );
     }
 
 
-//    private void setSaveDevice(BluetoothDevice device) {
-//        SharedPreferences settings = getSharedPreferences("Heartrate_Monitor", 0);
-//        SharedPreferences.Editor editor = settings.edit();
-//
-//        editor.putString("deviceAddress", device.getAddress());
-//        editor.putString("deviceName", device.getName());
-//
-//        editor.commit();
-//    }
-//
-//    private void getSaveDevice(SharedPreferences pref) {
-//
-//        mDeviceAddress = pref.getString("deviceAddress", null);
-//        mDeviceName = pref.getString("deviceName", null);
-//
-//        if( mDeviceName != null && mDeviceAddress != null ){
-//            ibResetDevice.setVisibility(View.VISIBLE);
-//            setHRStatus("Found stored device");
-//            setHRDevice(mDeviceName);
-//        }
-//    }
+    ////////////////////////////////////////
+//  starts the BT scan by click on CircularProgressBar
+    public void startProgressBarScan(View view) {
+        startScan();
+    }
+
 
     ////////////////////////////////////////
 //  updates the UI with heart rate data
 
     public void setHrData(int hrData) {
         runOnUiThread(() -> tHR_Data.setText(String.format(Locale.getDefault(), "%d", hrData )));
+    }
+
+    ////////////////////////////////////////
+//  updates the UI stuff
+    private void setTextFieldTexts(TextView textview, String string) {
+        runOnUiThread(() -> textview.setText(string));
     }
 
     ////////////////////////////////////////
@@ -720,7 +748,6 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         }
 
         this.ShowHR = !this.ShowHR;
-
     }
 
     ////////////////////////////////////////
@@ -733,22 +760,37 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         this.ShowClock = !this.ShowClock;
     }
 
-//    public void ResetDevice(View view) {
-//        SharedPreferences settings = getSharedPreferences("Heartrate_Monitor", 0);
-//        SharedPreferences.Editor editor = settings.edit();
-//        editor.putString("deviceAddress", null);
-//        editor.putString("deviceName", null);
-//        editor.commit();
-//        mDeviceAddress = null;
-//        mDeviceName = null;
-//        setHRDevice("Device removed");
-//        ibResetDevice.setVisibility(View.GONE);
-//
-//    }
 
     public void setcbStopwatch(View view) {
         bcbStopwatch = cbStopwatch.isChecked();
     }
 
+    public void setBlackModeOrientation(View view) {
+
+        this.selectedRadioButtonID = radioGroup.getCheckedRadioButtonId();
+//        Log.d(TAG, "<0> "+String.valueOf(this.selectedRadioButtonID));
+//        Log.d(TAG, "<1> "+R.id.radioPortrait);
+//        Log.d(TAG, "<2> "+R.id.radioLandscape);
+//        Log.d(TAG, "<3> "+R.id.radioRotation);
+
+        switch(this.selectedRadioButtonID) {
+            case R.id.radioPortrait:
+//                Log.d("AKL : case 0 -> %d", String.valueOf(this.blackModeOrientation));
+
+                blackModeOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                break;
+            case R.id.radioLandscape:
+//                Log.d("AKL : case 1 -> %d", String.valueOf(this.blackModeOrientation));
+
+                blackModeOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                break;
+            case R.id.radioRotation:
+//                Log.d("AKL : case 2 -> %d", String.valueOf(this.blackModeOrientation));
+
+                blackModeOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR;
+                break;
+        }
+
+    }
 
 }

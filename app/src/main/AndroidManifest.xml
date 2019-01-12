@@ -37,9 +37,8 @@
             android:value="AIzaSyCmpKXsokLyUUegbzwDMzDszPBKGzrha9A" />
         <activity android:name=".BlackMode"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
-            android:screenOrientation="unspecified"
             />
-
+        <!--android:screenOrientation-->
     </application>
 
 </manifest>

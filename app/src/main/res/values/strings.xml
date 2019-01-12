@@ -29,13 +29,14 @@
     <string name="menu_stop">Stop</string>
 
     <!-- Layout items -->
-    <string name="cbStopwatch">Start Stopwatch automatically</string>
+    <string name="cbStopwatch">Start automatically</string>
     <string name="tStopwatch">Stopwatch</string>
     <string name="tSpeedometer">Speedometer</string>
     <string name="tGPS_Status">GPS disabled</string>
     <string name="tHeartrate">Heartrate</string>
     <string name="tBT_Status">Bluetooth disabled</string>
     <string name="tClock">Clock</string>
+    <string name="tBlackMode">BlackMode</string>
     <string name="tHRViewData">--</string>
     <string name="tHRView">bpm</string>
     <string name="tHRPercentage">%</string>

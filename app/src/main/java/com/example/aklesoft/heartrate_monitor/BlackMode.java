@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.location.Criteria;
@@ -66,7 +65,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private Point displaySize;
     private boolean directionDownTextView = true;
 //    private Thread threadMoveText;
-    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
     private Thread refreshTimerThread;
     private boolean timerrunning;
@@ -80,6 +78,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     boolean bShowClock;
     boolean bShowTimer;
     boolean bStartStopwatch;
+    int iBlackModeOrientation;
 
 //  BlueTooth
     private static final int SCAN_PERIOD = 10000;
@@ -144,7 +143,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         bShowClock = getIntent().getExtras().getBoolean("ShowClock");
         bShowTimer = getIntent().getExtras().getBoolean("ShowTimer");
         bStartStopwatch = getIntent().getExtras().getBoolean( "StartStopwatch");
-
+        iBlackModeOrientation = getIntent().getExtras().getInt( "BlackModeOrientation");
 
         Group groupSpeedView = findViewById(R.id.groupSpeedView);
         Group groupHRView = findViewById(R.id.groupHRView);
@@ -247,7 +246,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             tTimerView.setVisibility(View.GONE);
         }
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        setRequestedOrientation(iBlackModeOrientation);
         getDisplaySize();
 
 // change speed textview position

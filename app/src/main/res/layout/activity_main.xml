@@ -11,225 +11,286 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.aklesoft.heartrate_monitor.MainActivity">
 
-    <LinearLayout
-        android:id="@+id/MainView"
+    <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="32dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:orientation="vertical">
+        android:layout_marginTop="8dp"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="16dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ToggleButton
+            android:id="@+id/SettingStopWatchView"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/stopwatch_selector"
+            android:onClick="setStopwatchOnClick"
+            android:textOff=""
+            android:textOn=""
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginStart="8dp"
+            android:text="@string/tStopwatch"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/SettingStopWatchView"
+            app:layout_constraintTop_toTopOf="@+id/SettingStopWatchView" />
 
-            <ToggleButton
-                android:id="@+id/SettingStopWatchView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="12dp"
-                android:background="@drawable/stopwatch_selector"
-                android:onClick="setStopwatchOnClick"
-                android:padding="12dp"
-                android:textOff=""
-                android:textOn="" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/tStopwatch"
-                    android:textColor="@color/cast_expanded_controller_background_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <CheckBox
-                    android:id="@+id/cbStopwatch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="setcbStopwatch"
-                    android:text="@string/cbStopwatch"
-                    android:theme="@style/MyCheckBoxes" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+        <CheckBox
+            android:id="@+id/cbStopwatch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:onClick="setcbStopwatch"
+            android:text="@string/cbStopwatch"
+            android:theme="@style/MyCheckBoxes"
+            app:layout_constraintEnd_toEndOf="@+id/textView4"
+            app:layout_constraintStart_toEndOf="@+id/SettingStopWatchView"
+            app:layout_constraintTop_toBottomOf="@+id/textView4" />
 
         <Space
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:visibility="visible" />
+            android:id="@+id/space1"
+            style="@style/Base.Theme.AppCompat"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@+id/SettingSpeedView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/SettingStopWatchView" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ToggleButton
+            android:id="@+id/SettingSpeedView"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/speedometer_selector"
+            android:onClick="setSpeedOnClick"
+            android:textOff=""
+            android:textOn=""
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/space1" />
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginStart="8dp"
+            android:text="@string/tSpeedometer"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/GPS_Status"
+            app:layout_constraintStart_toEndOf="@+id/SettingSpeedView"
+            app:layout_constraintTop_toTopOf="@+id/SettingSpeedView" />
 
-            <ToggleButton
-                android:id="@+id/SettingSpeedView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="12dp"
-                android:background="@drawable/speedometer_selector"
-                android:onClick="setSpeedOnClick"
-                android:padding="12dp"
-                android:textOff=""
-                android:textOn="" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/tSpeedometer"
-                    android:textColor="@color/cast_expanded_controller_background_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/GPS_Status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/tGPS_Status"
-                    android:textColor="@color/cast_expanded_controller_background_color" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+        <TextView
+            android:id="@+id/GPS_Status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/tGPS_Status"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/SettingSpeedView"
+            app:layout_constraintTop_toBottomOf="@+id/textView3" />
 
         <Space
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:visibility="visible" />
+            android:id="@+id/space2"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/SettingHRView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/SettingSpeedView" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ToggleButton
+            android:id="@+id/SettingHRView"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/heartshape_selector"
+            android:onClick="setHrOnClick"
+            android:textOff=""
+            android:textOn=""
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/space2" />
+
+        <TextView
+            android:id="@+id/HR_Data"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="16dp"
+            android:textAlignment="center"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            app:layout_constraintBottom_toBottomOf="@+id/SettingHRView"
+            app:layout_constraintEnd_toEndOf="@+id/SettingHRView"
+            app:layout_constraintStart_toStartOf="parent" />
 
-            <android.support.constraint.ConstraintLayout
-                android:id="@+id/frameLayout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="12dp">
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="@string/tHeartrate"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/SettingHRView"
+            app:layout_constraintTop_toTopOf="@+id/SettingHRView" />
 
-                <ToggleButton
-                    android:id="@+id/SettingHRView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/heartshape_selector"
-                    android:onClick="setHrOnClick"
-                    android:padding="12dp"
-                    android:textOff=""
-                    android:textOn=""
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/BT_Status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="@string/tBT_Status"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/SettingHRView"
+            app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
-                <TextView
-                    android:id="@+id/HR_Data"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:text=""
-                    android:textAlignment="center"
-                    android:textColor="@color/cast_expanded_controller_background_color"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent" />
+        <TextView
+            android:id="@+id/HR_Device"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            app:layout_constraintEnd_toStartOf="@+id/progressBar"
+            app:layout_constraintStart_toEndOf="@+id/SettingHRView"
+            app:layout_constraintTop_toBottomOf="@+id/BT_Status" />
 
-            </android.support.constraint.ConstraintLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/tHeartrate"
-                    android:textColor="@color/cast_expanded_controller_background_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/BT_Status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/tBT_Status"
-                    android:textColor="@color/cast_expanded_controller_background_color" />
-
-                <TextView
-                    android:id="@+id/HR_Status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textColor="@color/cast_expanded_controller_background_color" />
-
-                <TextView
-                    android:id="@+id/HR_Device"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textColor="@color/cast_expanded_controller_background_color" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+        <TextView
+            android:id="@+id/HR_Status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            app:layout_constraintBottom_toBottomOf="@+id/progressBar"
+            app:layout_constraintEnd_toStartOf="@+id/progressBar"
+            app:layout_constraintStart_toEndOf="@+id/SettingHRView"
+            app:layout_constraintTop_toBottomOf="@+id/HR_Device"
+            app:layout_constraintVertical_bias="0.002" />
 
         <Space
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:visibility="visible" />
+            android:id="@+id/space3"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/HR_Status" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ToggleButton
+            android:id="@+id/SettingClockView"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/clock_selector"
+            android:onClick="setClockOnClick"
+            android:textOff=""
+            android:textOn=""
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/space3" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:indeterminateDrawable="@drawable/progressbar"
+            android:onClick="startProgressBarScan"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/BT_Status" />
+
+        <TextView
+            android:id="@+id/textView5"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="@string/tClock"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/SettingClockView"
+            app:layout_constraintTop_toTopOf="@+id/SettingClockView" />
 
-            <ToggleButton
-                android:id="@+id/SettingClockView"
+        <Space
+            android:id="@+id/space4"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/SettingClockView" />
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tBlackMode"
+            android:textColor="@color/cast_expanded_controller_background_color"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/space4" />
+
+        <RadioGroup
+            android:id="@+id/displayGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView6">
+
+            <RadioButton
+                android:id="@+id/radioPortrait"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="12dp"
-                android:background="@drawable/clock_selector"
-                android:onClick="setClockOnClick"
-                android:padding="12dp"
-                android:textOff=""
-                android:textOn="" />
+                android:layout_weight="1"
+                android:onClick="setBlackModeOrientation"
+                android:checked="true"
+                android:drawableStart="@drawable/ic_baseline_screen_lock_portrait_24px" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/tClock"
-                    android:textColor="@color/cast_expanded_controller_background_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+            <RadioButton
+                android:id="@+id/radioLandscape"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="setBlackModeOrientation"
+                android:drawableStart="@drawable/ic_baseline_screen_lock_landscape_24px" />
 
-            </LinearLayout>
+            <RadioButton
+                android:id="@+id/radioRotation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="setBlackModeOrientation"
+                android:drawableStart="@drawable/ic_baseline_screen_rotation_24px" />
 
-        </LinearLayout>
+        </RadioGroup>
 
-    </LinearLayout>
+    </android.support.constraint.ConstraintLayout>
 
 </RelativeLayout>
