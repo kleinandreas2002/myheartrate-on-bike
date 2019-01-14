@@ -52,6 +52,7 @@ import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_
 import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER_DATA;
 import static com.example.aklesoft.heartrate_monitor.Constants.CHARACTERISTIC_ECHO_STRING;
 import static com.example.aklesoft.heartrate_monitor.Constants.CLIENT_CHARACTERISTIC_CONFIG;
+import static com.example.aklesoft.heartrate_monitor.Constants.PERMISSION_REQUEST_FINE_LOCATION;
 import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
 
 
@@ -103,14 +104,14 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     private ProgressBar progressBar;
 
     //  CheckBox
-    private CheckBox cbStopwatch;
-    private boolean bcbStopwatch;
+    private CheckBox cbStartStopwatch;
+    private boolean bcbStartStopwatch;
 
 //  parameters for BlackMode
     private boolean ShowSpeed;
     private boolean ShowHR;
     private boolean ShowClock;
-    private boolean ShowTimer;
+    private boolean ShowStopwatch;
     private int blackModeOrientation;
     private int selectedRadioButtonID;
 
@@ -125,9 +126,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -135,14 +134,10 @@ public class MainActivity extends AppCompatActivity implements Serializable {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
+            }
 //            return;
-        }
-
-
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, "BLE Not Supported",
-                    Toast.LENGTH_SHORT).show();
-            finish();
         }
 
         filters = new ArrayList<>();
@@ -152,6 +147,19 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         if (bluetoothManager == null) throw new AssertionError("Object cannot be null");
         mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        tBT_status = (TextView) findViewById(R.id.BT_Status);
+
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Toast.makeText(this, "BLE Not Supported",
+                    Toast.LENGTH_SHORT).show();
+//            finish();
+        }
+        else{
+            if(mBluetoothAdapter.isEnabled()){
+                setTextFieldTexts(tBT_status, getResources().getString(R.string.bluetooth_enabled));
+            }
+        }
 
         //  ToggleButtons
         ToggleButton SettingSpeedView = (ToggleButton) findViewById(R.id.SettingSpeedView);
@@ -171,23 +179,20 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
         tGPS_Status = (TextView) findViewById(R.id.GPS_Status);
 
-        cbStopwatch = (CheckBox) findViewById(R.id.cbStopwatch);
+        cbStartStopwatch = (CheckBox) findViewById(R.id.cbStartStopwatch);
 
-        tBT_status = (TextView) findViewById(R.id.BT_Status);
         Log.d(TAG, "onCreate -> BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBLA");
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        if(mBluetoothAdapter.isEnabled()){
-            setTextFieldTexts(tBT_status, getResources().getString(R.string.bluetooth_enabled));
-        }
+
 
 //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
         this.ShowSpeed = pref.getBoolean("ShowSpeed", false);
         this.ShowHR = pref.getBoolean("ShowHR", false);
         this.ShowClock = pref.getBoolean("ShowClock", false);
-        this.ShowTimer = pref.getBoolean("ShowTimer", false);
+        this.ShowStopwatch = pref.getBoolean("ShowStopwatch", false);
         this.selectedRadioButtonID = pref.getInt("BlackModeOrientation", 0);
         Log.d(TAG, "onCreate -> SharedPreferences -> selectedRadioButtonID:"+pref.getAll());
 
@@ -197,14 +202,17 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         editor.apply();
 
 
-        bcbStopwatch = pref.getBoolean("StartStopwatch", false);
-        cbStopwatch.setChecked(bcbStopwatch);
+        bcbStartStopwatch = pref.getBoolean("StartStopwatch", false);
+        cbStartStopwatch.setChecked(bcbStartStopwatch);
 
         SettingSpeedView.setChecked(this.ShowSpeed);
         SettingHRView.setChecked(this.ShowHR);
         SettingClockView.setChecked(this.ShowClock);
-        SettingTimerView.setChecked(this.ShowTimer);
-        radioGroup.check(this.selectedRadioButtonID);
+        SettingTimerView.setChecked(this.ShowStopwatch);
+        if(this.selectedRadioButtonID != 0) {
+            radioGroup.check(this.selectedRadioButtonID);
+            setBlackModeOrientation(null);
+        }
 
         tipWindow = new TooltipWindow(MainActivity.this);
         MainView = (RelativeLayout) findViewById(R.id.activity_main);
@@ -255,9 +263,16 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         }
 
         if(this.ShowHR) {
-            Log.e(TAG, "registerReceiver");
-            registerReceiver(broadcastReceiver, broadcastReceiverUpdateIntentFilter());
-            startScan();
+            if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                try {
+                    Log.e(TAG, "registerReceiver");
+                    registerReceiver(broadcastReceiver, broadcastReceiverUpdateIntentFilter());
+                    startScan();
+                } catch (Exception e) {
+                    Log.e(TAG, "broadcastReceiver isn't registered!");
+                }
+            }
+
         }
     }
 
@@ -342,9 +357,9 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         editor = pref.edit();
         editor.putBoolean("ShowSpeed", this.ShowSpeed);
         editor.putBoolean("ShowHR", this.ShowHR);
-        editor.putBoolean("ShowTimer", this.ShowTimer);
+        editor.putBoolean("ShowStopwatch", this.ShowStopwatch);
         editor.putBoolean("ShowClock", this.ShowClock);
-        editor.putBoolean("StartStopwatch", this.bcbStopwatch);
+        editor.putBoolean("StartStopwatch", this.bcbStartStopwatch);
         editor.putInt("BlackModeOrientation", this.selectedRadioButtonID);
 
 // ignore the warning, because editor.apply() doesn't give me the correct preferences back on next application start
@@ -695,20 +710,21 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         Intent myIntent = new Intent(getApplicationContext(), BlackMode.class);
         myIntent.putExtra("ShowSpeed", this.ShowSpeed);
         myIntent.putExtra("ShowHR", this.ShowHR);
-        myIntent.putExtra("ShowTimer", this.ShowTimer);
+        myIntent.putExtra("ShowStopwatch", this.ShowStopwatch);
         myIntent.putExtra("ShowClock", this.ShowClock);
-        myIntent.putExtra( "StartStopwatch", this.bcbStopwatch);
+        myIntent.putExtra( "StartStopwatch", this.bcbStartStopwatch);
         myIntent.putExtra( "BlackModeOrientation", this.blackModeOrientation);
-
+        Log.d("\">>>>>>>>AKL <1> : ", myIntent.getExtras().toString() );
         startActivity(myIntent);
-//        Log.d("\">>>>>>>>AKL <1> : ", "" );
     }
 
 
     ////////////////////////////////////////
 //  starts the BT scan by click on CircularProgressBar
     public void startProgressBarScan(View view) {
-        startScan();
+        if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            startScan();
+        }
     }
 
 
@@ -743,7 +759,9 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         if(!this.ShowHR){
             if( (mLeScanner != null || mBluetoothAdapter != null)) {
                 Log.d(TAG, "SettingHrOnClick -> state -> 2 ");
-                startScan();
+                if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                    startScan();
+                }
             }
         }
 
@@ -752,7 +770,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
     ////////////////////////////////////////
     public void setStopwatchOnClick(View view) {
-        this.ShowTimer = !this.ShowTimer;
+        this.ShowStopwatch = !this.ShowStopwatch;
     }
 
     ////////////////////////////////////////
@@ -761,8 +779,8 @@ public class MainActivity extends AppCompatActivity implements Serializable {
     }
 
 
-    public void setcbStopwatch(View view) {
-        bcbStopwatch = cbStopwatch.isChecked();
+    public void setCbStartStopwatch(View view) {
+        bcbStartStopwatch = cbStartStopwatch.isChecked();
     }
 
     public void setBlackModeOrientation(View view) {
