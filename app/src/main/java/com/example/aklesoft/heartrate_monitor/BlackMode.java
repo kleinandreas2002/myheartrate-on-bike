@@ -59,16 +59,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     private Thread refreshTimerThread;
     private boolean timerRunning;
-    int time = 0;
+    private int time = 0;
 
     private boolean bLocationManager;
 
-    boolean bShowSpeed;
-    boolean bShowHR;
-    boolean bShowClock;
-    boolean bShowTimer;
-    boolean bStartStopwatch;
-    int iBlackModeOrientation;
+    private boolean bShowHR;
 
     public MainActivity mainActivity;
 
@@ -90,17 +85,36 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         mainActivity = new MainActivity();
 
-        bShowHR = getIntent().getExtras().getBoolean("ShowHR");
-        bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed");
-        bShowClock = getIntent().getExtras().getBoolean("ShowClock");
-        bShowTimer = getIntent().getExtras().getBoolean("ShowTimer");
-        bStartStopwatch = getIntent().getExtras().getBoolean( "StartStopwatch");
-        iBlackModeOrientation = getIntent().getExtras().getInt( "BlackModeOrientation");
+        boolean bShowStopwatch;
+        boolean bStartStopwatch;
+        boolean bShowSpeed;
+        boolean bShowClock;
 
-        Group groupSpeedView = findViewById(R.id.groupSpeedView);
-        Group groupHRView = findViewById(R.id.groupHRView);
+        int iBlackModeOrientation;
+
+        bShowStopwatch = getIntent().getExtras().getBoolean("ShowStopwatch", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowStopwatch ->"+ bShowStopwatch);
+
+        bStartStopwatch = getIntent().getExtras().getBoolean( "StartStopwatch", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bStartStopwatch ->"+ bStartStopwatch);
+
+        bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowSpeed ->"+ bShowSpeed);
+
+        this.bShowHR = getIntent().getExtras().getBoolean("ShowHR", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowHR ->"+ this.bShowHR);
+
+        bShowClock = getIntent().getExtras().getBoolean("ShowClock", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowClock ->"+ bShowClock);
+
+
+        iBlackModeOrientation = getIntent().getExtras().getInt( "BlackModeOrientation");
+        Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->"+ iBlackModeOrientation);
 
         TextView tClockView = this.findViewById(R.id.ClockView);
+        TextView tSpeedViewUnit = this.findViewById(R.id.SpeedViewUnit);
+        TextView tHRViewUnit = this.findViewById(R.id.HRViewUnit);
+        TextView tHRPercentageUnit = this.findViewById(R.id.HRPercentageUnit);
 
         tSpeedView = this.findViewById(R.id.SpeedView);
         tHRView = this.findViewById(R.id.HRView);
@@ -113,7 +127,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             if (locationManager == null) throw new AssertionError("Object cannot be null");
             bLocationManager = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-            groupSpeedView.setVisibility(View.VISIBLE);
+            tSpeedView.setVisibility(View.VISIBLE);
+            tSpeedViewUnit.setVisibility(View.VISIBLE);
 
             client = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -132,7 +147,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 startActivity(intent);
             }
 
-
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
@@ -142,31 +156,43 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 //                                          int[] grantResults)
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
-                return;
-
+//                return;
             }
+
             Criteria criteria = new Criteria();
             provider = locationManager.getBestProvider(criteria, true);
-            locationManager.requestLocationUpdates(provider, 1, 0, this);
 
-            Location location = locationManager.getLastKnownLocation(provider);
+            if ( provider == null ) {
+                Log.d( TAG, "No location provider found!" );
+            }
+            else {
+                locationManager.requestLocationUpdates(provider, 1, 0, this);
 
-            onLocationChanged(location);
+                Location location = locationManager.getLastKnownLocation(provider);
+
+                onLocationChanged(location);
+            }
 
         }
         else
         {
-            groupSpeedView.setVisibility(View.GONE);
+            tSpeedView.setVisibility(View.GONE);
+            tSpeedViewUnit.setVisibility(View.GONE);
 
         }
 
-        if(bShowHR) {
-            groupHRView.setVisibility(View.VISIBLE);
+        if(this.bShowHR) {
+            tHRView.setVisibility(View.VISIBLE);
+            tHRViewUnit.setVisibility(View.VISIBLE);
+            tHRPercentage.setVisibility(View.VISIBLE);
+            tHRPercentageUnit.setVisibility(View.VISIBLE);
         }
         else
         {
-            groupHRView.setVisibility(View.GONE);
-        }
+            tHRView.setVisibility(View.GONE);
+            tHRViewUnit.setVisibility(View.GONE);
+            tHRPercentage.setVisibility(View.GONE);
+            tHRPercentageUnit.setVisibility(View.GONE);        }
 
         if(bShowClock) {
             tClockView.setVisibility(View.VISIBLE);
@@ -176,7 +202,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             tClockView.setVisibility(View.GONE);
         }
 
-        if(bShowTimer) {
+        if(bShowStopwatch) {
             tTimerView.setVisibility(View.VISIBLE);
             if( bStartStopwatch ) {
                 StartTimer(getWindow().getDecorView().getRootView());
@@ -219,9 +245,15 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             locationManager.requestLocationUpdates(provider, 1, 0, this);
         }
 
-        if(bShowHR) {
-            Log.e(TAG, "registerReceiver");
-            registerReceiver(broadcastReceiver, new MainActivity().broadcastReceiverUpdateIntentFilter());
+        if(this.bShowHR) {
+            if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                try {
+                    Log.e(TAG, "registerReceiver");
+                    registerReceiver(broadcastReceiver, new MainActivity().broadcastReceiverUpdateIntentFilter());
+                } catch (Exception e) {
+                    Log.e(TAG, "broadcastReceiver isn't registered!");
+                }
+            }
         }
 
 
@@ -234,8 +266,13 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             locationManager.removeUpdates(this);
         }
 
-        if(bShowHR) {
-            unregisterReceiver(broadcastReceiver);
+        if(this.bShowHR) {
+            try {
+                unregisterReceiver(broadcastReceiver);
+            }
+            catch (Exception e){
+                Log.e(TAG, "broadcastReceiver wasn't registered!");
+            }
         }
     }
 
@@ -356,13 +393,13 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     public void initTimer() {
         refreshTimerThread = new Thread(() -> {
             while (timerRunning) {
-                time = time + 1;
+                this.time = this.time + 1;
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
 //                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                runOnUiThread(() -> tTimerView.setText( String.format(Locale.getDefault(),"%02d:%02d:%02d", (time / 3600),((time % 3600) / 60), (time % 60) ) ));
+                runOnUiThread(() -> tTimerView.setText( String.format(Locale.getDefault(),"%02d:%02d:%02d", (this.time / 3600),((this.time % 3600) / 60), (this.time % 60) ) ));
 
             }
         });

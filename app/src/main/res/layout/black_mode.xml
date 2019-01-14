@@ -1,170 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/BlackModeView"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#000000"
-    android:orientation="vertical">
+    android:background="#000000">
 
-    <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/BlackModeView"
-        android:layout_width="fill_parent"
+    <TextView
+        android:id="@+id/TimerView"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#000000">
+        android:clickable="true"
+        android:focusable="true"
+        android:onClick="StartTimer"
+        android:text="@string/tTimerView"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textSize="72sp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/SpeedView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <TextView
-            android:id="@+id/TimerView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:onClick="StartTimer"
-            android:padding="12sp"
-            android:text="@string/tTimerView"
-            android:textAlignment="center"
-            android:textColor="#ffffff"
-            android:textSize="72sp"
-            android:visibility="visible"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/SpeedView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="@string/tSpeedometerViewData"
+        android:textAlignment="textEnd"
+        android:textColor="#ffffff"
+        android:textSize="72sp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/divider"
+        app:layout_constraintEnd_toStartOf="@+id/divider"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <android.support.constraint.Group
-            android:id="@+id/groupSpeedView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:constraint_referenced_ids="SpeedView,SpeedViewUnit" />
+    <TextView
+        android:id="@+id/SpeedViewUnit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:padding="12sp"
+        android:text="@string/tSpeedometerView"
+        android:textAlignment="viewStart"
+        android:textColor="#ffffff"
+        android:textSize="24sp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/SpeedView"
+        app:layout_constraintStart_toEndOf="@+id/divider" />
 
-        <TextView
-            android:id="@+id/SpeedView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:padding="12sp"
-            android:text="@string/tSpeedometerViewData"
-            android:textAlignment="textEnd"
-            android:textColor="#ffffff"
-            android:textSize="72sp"
-            android:visibility="visible"
-            app:layout_constraintEnd_toStartOf="@+id/SpeedViewUnit"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/TimerView" />
+    <TextView
+        android:id="@+id/HRView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/tHRViewData"
+        android:textAlignment="textEnd"
+        android:textColor="#ffffff"
+        android:textSize="72sp"
+        android:visibility="visible"
+        app:layout_constraintEnd_toStartOf="@+id/HRViewUnit"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/divider" />
 
+    <TextView
+        android:id="@+id/HRViewUnit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:padding="12sp"
+        android:text="@string/tHRView"
+        android:textAlignment="viewStart"
+        android:textColor="#ffffff"
+        android:textSize="24sp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/HRView"
+        app:layout_constraintEnd_toStartOf="@+id/divider" />
 
-        <TextView
-            android:id="@+id/SpeedViewUnit"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:padding="12sp"
-            android:text="@string/tSpeedometerView"
-            android:textAlignment="viewStart"
-            android:textColor="#ffffff"
-            android:textSize="36sp"
-            android:visibility="visible"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/SpeedView"
-            app:layout_constraintTop_toBottomOf="@+id/TimerView" />
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="?android:attr/listDivider"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/HRPercentage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/tHRViewData"
+        android:textAlignment="textEnd"
+        android:textColor="#ffffff"
+        android:textSize="72sp"
+        android:visibility="visible"
+        app:layout_constraintEnd_toStartOf="@+id/HRPercentageUnit"
+        app:layout_constraintStart_toEndOf="@+id/divider"
+        app:layout_constraintTop_toTopOf="@+id/HRView" />
 
-        <android.support.constraint.Group
-            android:id="@+id/groupHRView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:constraint_referenced_ids="HRView,HRViewUnit,HRPercentage,HRPercentageUnit" />
-
-        <TextView
-            android:id="@+id/HRView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:padding="12sp"
-            android:text="@string/tHRViewData"
-            android:textAlignment="textEnd"
-            android:textColor="#ffffff"
-            android:textSize="72sp"
-            android:visibility="visible"
-            app:layout_constraintEnd_toStartOf="@+id/HRViewUnit"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
-
-
-        <!--<Space-->
-        <!--android:id="@+id/space2"-->
-        <!--android:layout_width="0dp"-->
-        <!--android:layout_height="0dp"-->
-        <!--app:layout_constraintBottom_toTopOf="@+id/HRViewUnit"-->
-        <!--app:layout_constraintEnd_toEndOf="parent"-->
-        <!--app:layout_constraintStart_toEndOf="@+id/HRView"-->
-        <!--app:layout_constraintTop_toBottomOf="@+id/SpeedView" />-->
-
-        <TextView
-            android:id="@+id/HRViewUnit"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:padding="12sp"
-            android:text="@string/tHRView"
-            android:textAlignment="viewStart"
-            android:textColor="#ffffff"
-            android:textSize="36sp"
-            android:visibility="visible"
-            app:layout_constraintEnd_toStartOf="@+id/HRPercentage"
-            app:layout_constraintStart_toEndOf="@+id/HRView"
-            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
-
-        <TextView
-            android:id="@+id/HRPercentage"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:padding="12sp"
-            android:text="@string/tHRViewData"
-            android:textAlignment="textEnd"
-            android:textColor="#ffffff"
-            android:textSize="72sp"
-            android:visibility="visible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/HRPercentageUnit"
-            app:layout_constraintStart_toEndOf="@+id/HRViewUnit"
-            app:layout_constraintTop_toBottomOf="@+id/SpeedView" />
-
-
-        <!--<Space-->
-        <!--android:id="@+id/space3"-->
-        <!--android:layout_width="0dp"-->
-        <!--android:layout_height="0dp"-->
-        <!--app:layout_constraintBottom_toTopOf="@+id/HRViewUnit"-->
-        <!--app:layout_constraintEnd_toEndOf="parent"-->
-        <!--app:layout_constraintStart_toEndOf="@+id/HRView"-->
-        <!--app:layout_constraintTop_toBottomOf="@+id/SpeedView" />-->
-
-        <TextView
-            android:id="@+id/HRPercentageUnit"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:padding="12sp"
-            android:text="@string/tHRViewPercentage"
-            android:textAlignment="viewStart"
-            android:textColor="#ffffff"
-            android:textSize="36sp"
-            android:visibility="visible"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/HRPercentage"
-            app:layout_constraintTop_toBottomOf="@+id/SpeedViewUnit" />
-
-    </android.support.constraint.ConstraintLayout>
+    <TextView
+        android:id="@+id/HRPercentageUnit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:padding="12sp"
+        android:text="@string/tHRViewPercentage"
+        android:textAlignment="viewStart"
+        android:textColor="#ffffff"
+        android:textSize="24sp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/HRPercentage"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <DigitalClock
         android:id="@+id/ClockView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
         android:textAlignment="center"
         android:textColor="#ffffff"
         android:textSize="36sp"
-        android:visibility="visible" />
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>
 
 

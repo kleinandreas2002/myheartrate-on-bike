@@ -47,12 +47,12 @@
             app:layout_constraintTop_toTopOf="@+id/SettingStopWatchView" />
 
         <CheckBox
-            android:id="@+id/cbStopwatch"
+            android:id="@+id/cbStartStopwatch"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:onClick="setcbStopwatch"
+            android:onClick="setCbStartStopwatch"
             android:text="@string/cbStopwatch"
             android:theme="@style/MyCheckBoxes"
             app:layout_constraintEnd_toEndOf="@+id/textView4"
@@ -264,6 +264,14 @@
             app:layout_constraintTop_toBottomOf="@+id/textView6">
 
             <RadioButton
+                android:id="@+id/radioLandscape"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="setBlackModeOrientation"
+                android:drawableStart="@drawable/ic_baseline_screen_lock_landscape_24px" />
+
+            <RadioButton
                 android:id="@+id/radioPortrait"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -271,15 +279,6 @@
                 android:onClick="setBlackModeOrientation"
                 android:checked="true"
                 android:drawableStart="@drawable/ic_baseline_screen_lock_portrait_24px" />
-
-
-            <RadioButton
-                android:id="@+id/radioLandscape"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="setBlackModeOrientation"
-                android:drawableStart="@drawable/ic_baseline_screen_lock_landscape_24px" />
 
             <RadioButton
                 android:id="@+id/radioRotation"
