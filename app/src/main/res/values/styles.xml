@@ -13,4 +13,9 @@
         <item name="colorControlActivated">#00ff00</item>
     </style>
 
+    <style name="CustomCheckbox" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">@color/colorRed</item>
+        <item name="colorControlActivated">@color/colorTurquoise</item>
+    </style>
+
 </resources>
