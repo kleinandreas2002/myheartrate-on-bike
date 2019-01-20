@@ -17,19 +17,20 @@
 
     <style name="CustomCheckbox" parent="Theme.AppCompat">
         <item name="colorControlNormal">@color/colorRed</item>
-        <item name="android:colorButtonNormal">@color/colorRed</item>
         <item name="colorControlActivated">@color/colorBlue</item>
     </style>
 
     <style name="MySwitch" parent="@style/Widget.AppCompat.CompoundButton.Switch">
         <item name="android:colorControlNormal">@color/colorRed</item>
+        <item name="android:colorControlHighlight">@color/colorRed</item>
+        <item name="colorSwitchThumbNormal">@color/colorRed</item>
+        <item name="android:colorForeground">@color/colorLightRed</item>
         <item name="android:colorButtonNormal">@color/colorRed</item>
         <item name="android:colorControlActivated">@color/colorBlue</item>
     </style>
 
     <style name="MyRadioButton" parent="@style/Widget.AppCompat.CompoundButton.RadioButton">
-        <item name="android:colorControlNormal">@color/colorRed</item>
-        <item name="android:colorButtonNormal">@color/colorRed</item>
+        <item name="android:colorControlNormal">@color/colorGrey</item>
         <item name="android:colorControlActivated">@color/colorBlue</item>
     </style>
 

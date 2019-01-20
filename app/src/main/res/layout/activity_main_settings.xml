@@ -214,8 +214,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:drawableStart="@drawable/ic_baseline_screen_lock_landscape_24px_w"
-                        android:paddingTop="16dp"
-                        android:paddingBottom="16dp"
                         android:theme="@style/MyRadioButton"/>
 
                     <RadioButton
@@ -225,8 +223,6 @@
                         android:layout_weight="1"
                         android:checked="true"
                         android:drawableStart="@drawable/ic_baseline_screen_lock_portrait_24px_w"
-                        android:paddingTop="16dp"
-                        android:paddingBottom="16dp"
                         android:theme="@style/MyRadioButton"/>
 
                     <RadioButton
@@ -235,8 +231,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:drawableStart="@drawable/ic_baseline_screen_rotation_24px_w"
-                        android:paddingTop="16dp"
-                        android:paddingBottom="16dp"
                         android:theme="@style/MyRadioButton"/>
                 </RadioGroup>
             </LinearLayout>
