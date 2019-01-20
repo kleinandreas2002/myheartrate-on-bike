@@ -3,9 +3,11 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">#b7b7b7</item>
-        <item name="colorPrimaryDark">#ff7e7e7e</item>
-        <item name="colorAccent">#ff0000</item>
+        <item name="colorPrimary">@color/colorBlack</item>
+        <item name="colorPrimaryDark">@color/colorBlack</item>
+        <item name="colorAccent">@color/colorBlue</item>
+        <item name="android:textColor">@color/colorGrey</item>
+        <item name="android:windowBackground">@color/colorLightBlack</item>
     </style>
 
     <style name="MyCheckBoxes" parent="Theme.AppCompat.Light">
@@ -13,9 +15,22 @@
         <item name="colorControlActivated">#00ff00</item>
     </style>
 
-    <style name="CustomCheckbox" parent="Theme.AppCompat.Light">
+    <style name="CustomCheckbox" parent="Theme.AppCompat">
         <item name="colorControlNormal">@color/colorRed</item>
-        <item name="colorControlActivated">@color/colorTurquoise</item>
+        <item name="android:colorButtonNormal">@color/colorRed</item>
+        <item name="colorControlActivated">@color/colorBlue</item>
+    </style>
+
+    <style name="MySwitch" parent="@style/Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:colorControlNormal">@color/colorRed</item>
+        <item name="android:colorButtonNormal">@color/colorRed</item>
+        <item name="android:colorControlActivated">@color/colorBlue</item>
+    </style>
+
+    <style name="MyRadioButton" parent="@style/Widget.AppCompat.CompoundButton.RadioButton">
+        <item name="android:colorControlNormal">@color/colorRed</item>
+        <item name="android:colorButtonNormal">@color/colorRed</item>
+        <item name="android:colorControlActivated">@color/colorBlue</item>
     </style>
 
 </resources>

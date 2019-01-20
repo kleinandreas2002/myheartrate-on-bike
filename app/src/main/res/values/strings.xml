@@ -37,7 +37,7 @@
     <string name="tBT_Status">Bluetooth disabled</string>
     <string name="tClock">Clock</string>
     <string name="tBlackMode">BlackMode</string>
-    <string name="tBlackModeSettings">Black-Mode Settings</string>
+    <string name="tBlackModeSettings">Orientation Settings</string>
     <string name="tHRViewData">--</string>
     <string name="tHRView">bpm</string>
     <string name="tHRPercentage">%</string>
