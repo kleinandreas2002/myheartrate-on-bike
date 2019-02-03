@@ -12,7 +12,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/button3"
+        app:layout_constraintBottom_toTopOf="@+id/btnStart"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -23,6 +23,34 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/border"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <Switch
+                        android:id="@+id/switch1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:padding="10dp"
+                        android:text="@string/tClock"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:theme="@style/MySwitch"/>
+
+                </LinearLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/linearLayoutStopwatch"
@@ -53,7 +81,7 @@
                         android:id="@+id/cbStartStopwatch"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="8dp"
+                        android:padding="10dp"
                         android:text="@string/cbStopwatch"
                         android:textColor="@color/colorGrey"
                         android:theme="@style/CustomCheckbox"/>
@@ -91,7 +119,7 @@
                         android:id="@+id/textView7"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="8dp"
+                        android:padding="10dp"
                         android:text="@string/tGPS_Status"/>
 
                 </LinearLayout>
@@ -131,26 +159,30 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            android:padding="16dp"
+                            android:paddingLeft="30dp"
+                            android:paddingTop="20dp"
+                            android:paddingRight="30dp"
+                            android:paddingBottom="20dp"
                             app:srcCompat="@drawable/ic_baseline_refresh_24px"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
                             android:layout_weight="2"
                             android:orientation="vertical">
 
                             <TextView
                                 android:id="@+id/textView10"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                />
+                                android:layout_height="match_parent"
+                                android:text="@string/tBTDevice"/>
 
                             <TextView
                                 android:id="@+id/textView11"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                />
+                                android:layout_height="match_parent"
+                                android:text="@string/tBTDeviceStatus"/>
                         </LinearLayout>
 
                         <ImageView
@@ -165,34 +197,6 @@
 
                 </LinearLayout>
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="8dp"
-                android:background="@drawable/border"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <Switch
-                        android:id="@+id/switch1"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:padding="10dp"
-                        android:text="@string/tClock"
-                        android:textColor="@color/colorWhite"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:theme="@style/MySwitch"/>
-
-                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -264,7 +268,7 @@
     </ScrollView>
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/btnStart"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"

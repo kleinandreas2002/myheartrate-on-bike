@@ -49,5 +49,7 @@
     <string name="rbHorizontalOrientation">Horizontal</string>
     <string name="rbVertivalOrientation">Vertical</string>
     <string name="rbRotationOrientation">Rotation</string>
+    <string name="tBTDevice">BT Device</string>
+    <string name="tBTDeviceStatus">BT Status</string>
 
 </resources>
