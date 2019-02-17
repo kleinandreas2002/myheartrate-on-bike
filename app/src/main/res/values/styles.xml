@@ -20,6 +20,11 @@
         <item name="colorControlActivated">@color/colorBlue</item>
     </style>
 
+    <style name="CustomSpinner" parent="Theme.AppCompat">
+        <item name="android:background">@color/colorLightBlack</item>
+        <item name="android:textColor">@color/colorGrey</item>
+    </style>
+
     <style name="MySwitch" parent="@style/Widget.AppCompat.CompoundButton.Switch">
         <item name="android:colorControlNormal">@color/colorRed</item>
         <item name="android:colorControlHighlight">@color/colorRed</item>
