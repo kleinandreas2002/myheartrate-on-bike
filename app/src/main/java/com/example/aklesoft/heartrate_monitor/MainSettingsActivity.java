@@ -3,11 +3,13 @@ package com.example.aklesoft.heartrate_monitor;
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.Toast;
 
 public class MainSettingsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener
@@ -19,12 +21,19 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_settings);
 
+        initSwitched();
         setupOrientationSpinner();
     }
 
     public void onClickStartBlackMode(View v)
     {
-        Toast.makeText(this, "Clicked on Button", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "onClickStartBlackMode", Toast.LENGTH_LONG).show();
+
+        Log.d("Test Log", "onClickStartBlackMode Clock: " + m_ClockSwitch.isChecked());
+        Log.d("Test Log", "onClickStartBlackMode Stopwatch: " + m_StopwatchSwitch.isChecked());
+        Log.d("Test Log", "onClickStartBlackMode Speedometer: " + m_SpeedometerSwitch.isChecked());
+        Log.d("Test Log", "onClickStartBlackMode Heartrate: " + m_HeartrateSwitch.isChecked());
+        Log.d("Test Log", "onClickStartBlackMode Spinner: " + m_OrientationSpinner.getSelectedItem());
     }
 
     // NOTE: Spinner selection callbacks
@@ -58,16 +67,28 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     // ---------------------------------------------------------------------------------------------
     // PRIVATE
 
+    private void initSwitched()
+    {
+        m_ClockSwitch = findViewById(R.id.switchClock);
+        m_StopwatchSwitch = findViewById(R.id.switchStopwatch);
+        m_SpeedometerSwitch = findViewById(R.id.switchSpeedometer);
+        m_HeartrateSwitch = findViewById(R.id.switchHeartrate);
+    }
+
     private void setupOrientationSpinner()
     {
-        m_Spinner = findViewById(R.id.spinnerOrientation);
+        m_OrientationSpinner = findViewById(R.id.spinnerOrientation);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.blackmode_orienntations, R.layout.support_simple_spinner_dropdown_item);
         adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
 
-        m_Spinner.setAdapter(adapter);
-        m_Spinner.setOnItemSelectedListener(this);
+        m_OrientationSpinner.setAdapter(adapter);
+        m_OrientationSpinner.setOnItemSelectedListener(this);
     }
 
-    private Spinner m_Spinner;
+    private Spinner m_OrientationSpinner;
+    private Switch m_ClockSwitch;
+    private Switch m_StopwatchSwitch;
+    private Switch m_SpeedometerSwitch;
+    private Switch m_HeartrateSwitch;
 }
