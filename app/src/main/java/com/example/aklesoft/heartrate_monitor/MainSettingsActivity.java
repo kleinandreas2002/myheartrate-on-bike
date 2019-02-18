@@ -1,6 +1,8 @@
 package com.example.aklesoft.heartrate_monitor;
 
+import android.content.Context;
 import android.content.Intent;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,22 +26,14 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_StopwatchStartAuto = findViewById(R.id.cbStartStopwatch);
         m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
 
+        initSwipeListener(this);
         initSwitched();
         setupOrientationSpinner();
     }
 
     public void onClickStartBlackMode(View v)
     {
-        Intent intentToStartBlackMode = new Intent(getApplicationContext(), BlackMode.class);
-
-        intentToStartBlackMode.putExtra("ShowSpeed", m_SpeedometerSwitch.isChecked());
-        intentToStartBlackMode.putExtra("ShowHR", m_HeartrateSwitch.isChecked());
-        intentToStartBlackMode.putExtra("ShowStopwatch", m_StopwatchSwitch.isChecked());
-        intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
-        intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
-        intentToStartBlackMode.putExtra("BlackModeOrientation", m_OrientationSpinner.getSelectedItem().toString());
-
-        startActivity(intentToStartBlackMode);
+        startBlackMode();
     }
 
     public void onClickReloadBt(View v)
@@ -85,6 +79,35 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     // ---------------------------------------------------------------------------------------------
     // PRIVATE
 
+
+    private void initSwipeListener(Context _Context)
+    {
+        ConstraintLayout mainView = findViewById(R.id.activityMainSettings);
+
+        mainView.setOnTouchListener(new OnSwipeTouchListener(_Context)
+        {
+            public void onSwipeTop()
+            {
+                Log.d("", "onSwipeTop: ");
+            }
+
+            public void onSwipeRight()
+            {
+                finish();
+            }
+
+            public void onSwipeLeft()
+            {
+                startBlackMode();
+            }
+
+            public void onSwipeBottom()
+            {
+                Log.d("", "onSwipeBottom: ");
+            }
+        });
+    }
+
     private void initSwitched()
     {
         m_ClockSwitch = findViewById(R.id.switchClock);
@@ -103,7 +126,21 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_OrientationSpinner.setAdapter(adapter);
         m_OrientationSpinner.setOnItemSelectedListener(this);
     }
-    
+
+    private void startBlackMode()
+    {
+        Intent intentToStartBlackMode = new Intent(getApplicationContext(), BlackMode.class);
+
+        intentToStartBlackMode.putExtra("ShowSpeed", m_SpeedometerSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowHR", m_HeartrateSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowStopwatch", m_StopwatchSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
+        intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        intentToStartBlackMode.putExtra("BlackModeOrientation", m_OrientationSpinner.getSelectedItem().toString());
+
+        startActivity(intentToStartBlackMode);
+    }
+
     // ---------------------------------------------------------------------------------------------
 
     private CheckBox m_StopwatchStartAuto;
