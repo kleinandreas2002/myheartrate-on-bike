@@ -1,16 +1,16 @@
 package com.example.aklesoft.heartrate_monitor;
 
-import android.content.Context;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
-import android.widget.Toast;
 
 public class MainSettingsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener
 {
@@ -21,6 +21,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_settings);
 
+        m_StopwatchStartAuto = findViewById(R.id.cbStartStopwatch);
         m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
 
         initSwitched();
@@ -29,13 +30,16 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
     public void onClickStartBlackMode(View v)
     {
-        Toast.makeText(this, "onClickStartBlackMode", Toast.LENGTH_LONG).show();
+        Intent intentToStartBlackMode = new Intent(getApplicationContext(), BlackMode.class);
 
-        Log.d("Test Log", "onClickStartBlackMode Clock: " + m_ClockSwitch.isChecked());
-        Log.d("Test Log", "onClickStartBlackMode Stopwatch: " + m_StopwatchSwitch.isChecked());
-        Log.d("Test Log", "onClickStartBlackMode Speedometer: " + m_SpeedometerSwitch.isChecked());
-        Log.d("Test Log", "onClickStartBlackMode Heartrate: " + m_HeartrateSwitch.isChecked());
-        Log.d("Test Log", "onClickStartBlackMode Spinner: " + m_OrientationSpinner.getSelectedItem());
+        intentToStartBlackMode.putExtra("ShowSpeed", m_SpeedometerSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowHR", m_HeartrateSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowStopwatch", m_StopwatchSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
+        intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        intentToStartBlackMode.putExtra("BlackModeOrientation", m_OrientationSpinner.getSelectedItem().toString());
+
+        startActivity(intentToStartBlackMode);
     }
 
     public void onClickReloadBt(View v)
@@ -50,6 +54,11 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id)
     {
+        /*
+        Get the imageView next to the spinner to update the image accordingly to the selected value
+        of the spinner itself.
+         */
+
         String selectedValue = parent.getItemAtPosition(pos).toString();
         ImageView img = findViewById(R.id.imageViewOrientationSettings);
 
@@ -94,7 +103,10 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_OrientationSpinner.setAdapter(adapter);
         m_OrientationSpinner.setOnItemSelectedListener(this);
     }
+    
+    // ---------------------------------------------------------------------------------------------
 
+    private CheckBox m_StopwatchStartAuto;
     private Spinner m_OrientationSpinner;
     private Switch m_ClockSwitch;
     private Switch m_StopwatchSwitch;
