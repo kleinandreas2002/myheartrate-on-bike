@@ -21,6 +21,8 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_settings);
 
+        m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
+
         initSwitched();
         setupOrientationSpinner();
     }
@@ -35,6 +37,13 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         Log.d("Test Log", "onClickStartBlackMode Heartrate: " + m_HeartrateSwitch.isChecked());
         Log.d("Test Log", "onClickStartBlackMode Spinner: " + m_OrientationSpinner.getSelectedItem());
     }
+
+    public void onClickReloadBt(View v)
+    {
+        m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
+        m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_clear_24px);
+    }
+
 
     // NOTE: Spinner selection callbacks
 
@@ -91,4 +100,5 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private Switch m_StopwatchSwitch;
     private Switch m_SpeedometerSwitch;
     private Switch m_HeartrateSwitch;
+    private ImageView m_ReloadBtImage;
 }
