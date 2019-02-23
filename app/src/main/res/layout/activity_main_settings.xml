@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activityMainSettings"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:layout_editor_absoluteY="81dp">
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/linearLayoutBaseContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/border"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <Switch
+                    android:id="@+id/switchClock"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:padding="10dp"
+                    android:text="@string/tClock"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:theme="@style/MySwitch"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/border"
+                android:orientation="vertical">
+
+                <Switch
+                    android:id="@+id/switchStopwatch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:text="@string/tStopwatch"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:theme="@style/MySwitch"/>
+
+                <CheckBox
+                    android:id="@+id/cbStartStopwatch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:text="@string/cbStopwatch"
+                    android:textColor="@color/colorGrey"
+                    android:theme="@style/CustomCheckbox"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/border"
+                android:orientation="vertical">
+
+                <Switch
+                    android:id="@+id/switchSpeedometer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:padding="10dp"
+                    android:text="@string/tSpeedometer"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:theme="@style/MySwitch"/>
+
+                <TextView
+                    android:id="@+id/textViewGps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:text="@string/tGPS_Status"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/border"
+                android:orientation="vertical">
+
+                <Switch
+                    android:id="@+id/switchHeartrate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:text="@string/tHeartrate"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:theme="@style/MySwitch"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/imageBtRefresh"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:clickable="true"
+                        android:contentDescription="@string/ivBTRefreshDescription"
+                        android:onClick="onClickReloadBt"
+                        android:paddingLeft="30dp"
+                        android:paddingTop="20dp"
+                        android:paddingRight="30dp"
+                        android:paddingBottom="20dp"
+                        app:srcCompat="@drawable/ic_baseline_refresh_24px"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="2"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/textViewBtDevice"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="@string/tBTDevice"/>
+
+                        <TextView
+                            android:id="@+id/textViewBtStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="@string/tBTDeviceStatus"/>
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/imageBtIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0"
+                        android:contentDescription="@string/ivBTIconDescription"
+                        android:padding="8dp"
+                        app:srcCompat="@drawable/ic_baseline_bluetooth_disabled_24px"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayoutBlackMode"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/border"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textViewOrrientationSettings"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:padding="10dp"
+                        android:text="@string/tBlackModeSettings"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <ImageView
+                        android:id="@+id/imageViewOrientationSettings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0"
+                        android:contentDescription="@string/ivOrientationIconDescription"
+                        app:srcCompat="@drawable/ic_baseline_screen_lock_landscape_24px_w"/>
+
+                    <Spinner
+                        android:id="@+id/spinnerOrientation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:theme="@style/CustomSpinner"/>
+
+                </LinearLayout>
+
+                <RadioGroup
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <RadioButton
+                        android:id="@+id/radioLandscape"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:layout_weight="1"
+                        android:drawableStart="@drawable/ic_baseline_screen_lock_landscape_24px_w"
+                        android:padding="14dp"
+                        android:paddingStart="44dp"
+                        android:paddingEnd="44dp"
+                        android:theme="@style/MyRadioButton"/>
+
+                    <RadioButton
+                        android:id="@+id/radioPortrait"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:layout_weight="1"
+                        android:checked="true"
+                        android:drawableStart="@drawable/ic_baseline_screen_lock_portrait_24px_w"
+                        android:padding="14dp"
+                        android:paddingStart="44dp"
+                        android:paddingEnd="44dp"
+                        android:theme="@style/MyRadioButton"/>
+
+                    <RadioButton
+                        android:id="@+id/radioRotation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:layout_weight="1"
+                        android:drawableStart="@drawable/ic_baseline_screen_rotation_24px_w"
+                        android:padding="14dp"
+                        android:paddingStart="44dp"
+                        android:paddingEnd="44dp"
+                        android:theme="@style/MyRadioButton"/>
+                </RadioGroup>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/colorBlue"
+        android:onClick="onClickStartBlackMode"
+        android:text="@string/bStartBlackMode"
+        android:textColor="@color/colorWhite"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+</android.support.constraint.ConstraintLayout>

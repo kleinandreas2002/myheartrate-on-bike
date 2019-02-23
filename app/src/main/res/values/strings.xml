@@ -28,6 +28,12 @@
     <string name="menu_scan">Scan</string>
     <string name="menu_stop">Stop</string>
 
+    <string-array name="blackmode_orienntations">
+        <item>@string/rbHorizontalOrientation</item>
+        <item>@string/rbVertivalOrientation</item>
+        <item>@string/rbRotationOrientation</item>
+    </string-array>
+
     <!-- Layout items -->
     <string name="cbStopwatch">Start automatically</string>
     <string name="tStopwatch">Stopwatch</string>
@@ -37,6 +43,7 @@
     <string name="tBT_Status">Bluetooth disabled</string>
     <string name="tClock">Clock</string>
     <string name="tBlackMode">BlackMode</string>
+    <string name="tBlackModeSettings">Orientation Settings</string>
     <string name="tHRViewData">--</string>
     <string name="tHRView">bpm</string>
     <string name="tHRPercentage">%</string>
@@ -44,5 +51,15 @@
     <string name="tSpeedometerViewData">--</string>
     <string name="tSpeedometerView">kmh</string>
     <string name="tTimerView">00:00.00</string>
+    <string name="bStartBlackMode">Start Black-Mode</string>
+    <string name="rbHorizontalOrientation">Horizontal</string>
+    <string name="rbVertivalOrientation">Vertical</string>
+    <string name="rbRotationOrientation">Rotation</string>
+    <string name="tBTDevice">BT Device</string>
+    <string name="tBTDeviceStatus">BT Status</string>
+
+    <string name="ivBTRefreshDescription">BT Refresh Button Image</string>
+    <string name="ivBTIconDescription">BT Status Image</string>
+    <string name="ivOrientationIconDescription">Device Orientation Status Image</string>
 
 </resources>

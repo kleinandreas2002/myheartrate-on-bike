@@ -16,12 +16,29 @@
                             <entry key="launcher">
                               <value>
                                 <PersistentState>
+                                  <option name="children">
+                                    <map>
+                                      <entry key="foregroundImage">
+                                        <value>
+                                          <PersistentState>
+                                            <option name="values">
+                                              <map>
+                                                <entry key="scalingPercent" value="71" />
+                                              </map>
+                                            </option>
+                                          </PersistentState>
+                                        </value>
+                                      </entry>
+                                    </map>
+                                  </option>
                                   <option name="values">
                                     <map>
-                                      <entry key="backgroundLayerName" value="ic_baseline-screen_lock_landscape_background" />
-                                      <entry key="foregroundImage" value="D:\AndroidStudioProjects\master\Heartrate_Monitor\app\original_graphics\baseline-screen_lock_landscape-24px.svg" />
-                                      <entry key="foregroundLayerName" value="ic_baseline-screen_lock_landscape" />
-                                      <entry key="outputName" value="baseline-screen_lock_landscape" />
+                                      <entry key="backgroundAssetType" value="COLOR" />
+                                      <entry key="backgroundColor" value="020e1a" />
+                                      <entry key="backgroundLayerName" value="ic_launcher_background_2" />
+                                      <entry key="foregroundImage" value="$USER_HOME$/Desktop/heartrate-app_icon.png" />
+                                      <entry key="foregroundLayerName" value="ic_launcher_foreground_2" />
+                                      <entry key="outputName" value="ic_launcher_2" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -48,11 +65,8 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="height" value="48" />
-                            <entry key="outputName" value="ic_heartshape_focused_round_new" />
-                            <entry key="overrideSize" value="true" />
-                            <entry key="sourceFile" value="D:\AndroidStudioProjects\master\Heartrate_Monitor\app\original_graphics\heartshape-focused-round.svg" />
-                            <entry key="width" value="48" />
+                            <entry key="outputName" value="ic_baseline_clear_24px" />
+                            <entry key="sourceFile" value="$USER_HOME$/Downloads/baseline-clear-24px.svg" />
                           </map>
                         </option>
                       </PersistentState>
