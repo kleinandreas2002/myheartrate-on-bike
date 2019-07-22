@@ -142,7 +142,8 @@
                         android:paddingTop="20dp"
                         android:paddingRight="30dp"
                         android:paddingBottom="20dp"
-                        app:srcCompat="@drawable/ic_baseline_refresh_24px"/>
+                        app:srcCompat="@drawable/ic_baseline_refresh_24px"
+                        android:focusable="true" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -164,6 +165,14 @@
                             android:text="@string/tBTDeviceStatus"/>
                     </LinearLayout>
 
+                    <TextView
+                        android:id="@+id/textViewBtData"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0"
+                        android:gravity="center"
+                        android:textAlignment="center" />
+
                     <ImageView
                         android:id="@+id/imageBtIcon"
                         android:layout_width="wrap_content"
@@ -171,7 +180,7 @@
                         android:layout_weight="0"
                         android:contentDescription="@string/ivBTIconDescription"
                         android:padding="8dp"
-                        app:srcCompat="@drawable/ic_baseline_bluetooth_disabled_24px"/>
+                        app:srcCompat="@drawable/ic_baseline_bluetooth_disabled_24px" />
 
                 </LinearLayout>
 
