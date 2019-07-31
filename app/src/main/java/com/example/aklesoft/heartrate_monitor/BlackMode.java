@@ -64,8 +64,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private boolean bLocationManager;
 
     private boolean bShowHR;
+    private boolean bShowStopwatch;
+    private boolean bStartStopwatch;
+    private boolean bShowSpeed;
+    private boolean bShowClock;
 
-    public MainActivity mainActivity;
+    public MainSettingsActivity mainSettingsActivity;
 
     /** Called when the activity is first created. */
     public void onCreate(Bundle savedInstanceState) {
@@ -83,12 +87,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         setContentView(R.layout.black_mode);
 
-        mainActivity = new MainActivity();
+        mainSettingsActivity = new MainSettingsActivity();
 
-        boolean bShowStopwatch;
-        boolean bStartStopwatch;
-        boolean bShowSpeed;
-        boolean bShowClock;
+
 
         int iBlackModeOrientation;
 
@@ -101,8 +102,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowSpeed ->"+ bShowSpeed);
 
-        this.bShowHR = getIntent().getExtras().getBoolean("ShowHR", false);
-        Log.d(TAG, "BlackMode -> onCreate -> bShowHR ->"+ this.bShowHR);
+        bShowHR = getIntent().getExtras().getBoolean("ShowHR", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowHR ->"+ bShowHR);
 
         bShowClock = getIntent().getExtras().getBoolean("ShowClock", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowClock ->"+ bShowClock);
@@ -181,7 +182,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         }
 
-        if(this.bShowHR) {
+        if(bShowHR) {
             tHRView.setVisibility(View.VISIBLE);
             tHRViewUnit.setVisibility(View.VISIBLE);
             tHRPercentage.setVisibility(View.VISIBLE);
@@ -245,11 +246,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             locationManager.requestLocationUpdates(provider, 1, 0, this);
         }
 
-        if(this.bShowHR) {
+        if(bShowHR) {
             if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
                 try {
                     Log.e(TAG, "registerReceiver");
-                    registerReceiver(broadcastReceiver, new MainActivity().broadcastReceiverUpdateIntentFilter());
+                    registerReceiver(broadcastReceiver, new MainSettingsActivity().broadcastReceiverUpdateIntentFilter());
                 } catch (Exception e) {
                     Log.e(TAG, "broadcastReceiver isn't registered!");
                 }
@@ -266,7 +267,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             locationManager.removeUpdates(this);
         }
 
-        if(this.bShowHR) {
+        if(bShowHR) {
             try {
                 unregisterReceiver(broadcastReceiver);
             }
@@ -310,8 +311,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         runOnUiThread(() -> {
             // Stuff that updates the UI
-            mainActivity.setTextFieldTexts(tHRView, Integer.toString(hrData));
-            mainActivity.setTextFieldTexts(tHRPercentage, Integer.toString(iPercentage));
+            mainSettingsActivity.setTextFieldTexts(tHRView, Integer.toString(hrData));
+            mainSettingsActivity.setTextFieldTexts(tHRPercentage, Integer.toString(iPercentage));
         });
     }
 
@@ -329,7 +330,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         {
             pCurrentLocation = location;
             float calcSpeed = 0.0f;
-            if (this.mLastLocation != null) {
+            if (mLastLocation != null) {
                 //TODO
                 calcSpeed = (float) (Math.sqrt(
                         Math.pow(pCurrentLocation.getLongitude() - mLastLocation.getLongitude(), 2)
@@ -343,7 +344,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 calcSpeed = pCurrentLocation.getSpeed();
                 calcSpeed = (calcSpeed * 3.6f);
                 float roundcalcSpeed = Math.round(calcSpeed*10.0f)/10.0f;
-                this.mLastLocation = pCurrentLocation;
+                mLastLocation = pCurrentLocation;
                 String text = "" + roundcalcSpeed;
                 tSpeedView.setText(text);
 
@@ -393,13 +394,13 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     public void initTimer() {
         refreshTimerThread = new Thread(() -> {
             while (timerRunning) {
-                this.time = this.time + 1;
+                time = time + 1;
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
 //                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                runOnUiThread(() -> tTimerView.setText( String.format(Locale.getDefault(),"%02d:%02d:%02d", (this.time / 3600),((this.time % 3600) / 60), (this.time % 60) ) ));
+                runOnUiThread(() -> tTimerView.setText( String.format(Locale.getDefault(),"%02d:%02d:%02d", (time / 3600),((time % 3600) / 60), (time % 60) ) ));
 
             }
         });

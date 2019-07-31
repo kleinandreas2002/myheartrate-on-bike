@@ -12,7 +12,7 @@ import java.util.UUID;
 
 import static com.example.aklesoft.heartrate_monitor.Constants.CHARACTERISTIC_ECHO_STRING;
 import static com.example.aklesoft.heartrate_monitor.Constants.SERVICE_STRING;
-import static com.example.aklesoft.heartrate_monitor.MainActivity.TAG;
+import static com.example.aklesoft.heartrate_monitor.MainSettingsActivity.TAG;
 
 
 public class BluetoothUtils {

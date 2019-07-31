@@ -59,7 +59,7 @@ import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
 
 
 public class MainSettingsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
-    public final static String TAG = MainActivity.class.getSimpleName();
+    public final static String TAG = MainSettingsActivity.class.getSimpleName();
 
 
     //  UUIDs
@@ -86,6 +86,8 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate -> BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBLA");
+
         setContentView(R.layout.activity_main_settings);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
 
@@ -134,7 +136,6 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
 
 
-        Log.d(TAG, "onCreate -> BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBLA");
 
         //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
@@ -151,23 +152,16 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         editor.apply();
 
 
+
+
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        Log.e(TAG, "onStop - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
 
-        editor = pref.edit();
-        editor.putBoolean("ShowSpeed", m_SpeedometerSwitch.isChecked());
-        editor.putBoolean("ShowHR", m_HeartrateSwitch.isChecked());
-        editor.putBoolean("ShowClock", m_ClockSwitch.isChecked());
-        editor.putBoolean("ShowStopwatch", m_StopwatchSwitch.isChecked());
-        editor.putBoolean("StartStopwatch", m_StopwatchStartAuto.isChecked());
-        editor.putInt("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
 
-// ignore the warning, because editor.apply() doesn't give me the correct preferences back on next application start
-        editor.commit();
-        Log.d(TAG, "onStop -> SharedPreferences -> pref.getAll():" + pref.getAll());
     }
 
 
@@ -194,18 +188,20 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
                 try {
                     Log.e(TAG, "registerReceiver");
                     registerReceiver(broadcastReceiver, broadcastReceiverUpdateIntentFilter());
-                    startScan();
+                    startBTScan();
                 } catch (Exception e) {
                     Log.e(TAG, "broadcastReceiver isn't registered!");
                 }
             }
 
         }
+
     }
 
     @Override
     protected void onPause(){
         super.onPause();
+        Log.e(TAG, "onPause - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
 
         if(m_HeartrateSwitch.isChecked()) {
             if( (mLeScanner != null || mBluetoothAdapter != null) && mBluetoothAdapter.isEnabled()) {
@@ -226,10 +222,18 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.e(TAG, "onDestroy - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
 
         if(m_HeartrateSwitch.isChecked()) {
             disconnectGattServer(mGatt);
             mGatt = null;
+
+//            try {
+//                unregisterReceiver(broadcastReceiver);
+//            }
+//            catch (Exception e){
+//                Log.e(TAG, "broadcastReceiver wasn't registered!");
+//            }
         }
 
         Thread[] threads = new Thread[Thread.activeCount()];
@@ -242,7 +246,22 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         }
         Log.d(TAG, "onDestroy -> threads interrupted -> ");
 
-        System.exit(0);
+
+        editor = pref.edit();
+        editor.putBoolean("ShowSpeed", m_SpeedometerSwitch.isChecked());
+        editor.putBoolean("ShowHR", m_HeartrateSwitch.isChecked());
+        editor.putBoolean("ShowClock", m_ClockSwitch.isChecked());
+        editor.putBoolean("ShowStopwatch", m_StopwatchSwitch.isChecked());
+        editor.putBoolean("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        editor.putInt("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
+
+// ignore the warning, because editor.apply() doesn't give me the correct preferences back on next application start
+        editor.commit();
+        Log.d(TAG, "onDestroy -> SharedPreferences -> pref.getAll():" + pref.getAll());
+
+        if(isFinishing() == true) {
+            System.exit(0);
+        }
 
     }
 
@@ -256,7 +275,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
         m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_clear_24px);
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            startScan();
+            startBTScan();
         }
     }
 
@@ -375,6 +394,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
 
     public void connectToDevice(BluetoothDevice device) {
+        Log.e(TAG, "connectToDevice");
 
         boolean paired = false;
         for (BluetoothDevice pairedDevice : mBluetoothAdapter.getBondedDevices()) {
@@ -415,7 +435,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     }
 
 
-    private void startScan() {
+    private void startBTScan() {
         Log.e(TAG, "onResume -> Start BT work");
 
         setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_for_devices));
@@ -454,8 +474,10 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             if (Build.VERSION.SDK_INT < 21) {
                 mBluetoothAdapter.stopLeScan(mLeScanCallback);
             } else {
-                Log.e(TAG, "scanLeDevice 2-> stopScan");
-                mLeScanner.stopScan(mScanCallback);
+                if(mLeScanner != null) {
+                    Log.e(TAG, "scanLeDevice 2-> stopScan");
+                    mLeScanner.stopScan(mScanCallback);
+                }
             }
         }
     }
@@ -660,24 +682,6 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             readCharacteristic(characteristic);
         }
 
-        public void disconnectGattServer(BluetoothGatt gatt) {
-
-            if (gatt != null) {
-                Log.e(TAG, "Closing Gatt connection");
-
-                gatt.abortReliableWrite();
-                gatt.disconnect();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {
-//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                gatt.close();
-                setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_disconnected));
-                setTextFieldTexts(m_BtDevice, "");
-
-            }
-        }
 
         private void enableCharacteristicNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             boolean characteristicWriteSuccess = gatt.setCharacteristicNotification(characteristic, true);
@@ -740,6 +744,25 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             }
 
 
+        }
+
+        private void disconnectGattServer(BluetoothGatt gatt) {
+
+            if (gatt != null) {
+                Log.e(TAG, "Closing Gatt connection");
+
+                gatt.abortReliableWrite();
+                gatt.disconnect();
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                gatt.close();
+                setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_disconnected));
+                setTextFieldTexts(m_BtDevice, "");
+
+            }
         }
     }
 
