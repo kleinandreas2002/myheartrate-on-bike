@@ -1,7 +1,6 @@
 package com.example.aklesoft.heartrate_monitor;
 
 import android.Manifest;
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -26,7 +25,6 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelUuid;
-import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -35,16 +33,15 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
-import android.bluetooth.le.ScanFilter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -76,6 +73,9 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private BluetoothAdapter mBluetoothAdapter;
     private List<ScanFilter> filters;
 
+    // Device List
+    ArrayList<String> arrayDevices;
+    ArrayAdapter<String> adapterDevice;
 
     //  Save settings
     SharedPreferences pref;
@@ -108,6 +108,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         // INIT layout items
 //         initSwipeListener(this);
         initSwitched();
+        initSpinner();
         initTextViews();
         initButtons();
         setupOrientationSpinner();
@@ -128,13 +129,36 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         } else {
             if (mBluetoothAdapter.isEnabled()) {
                 setTextFieldTexts(m_BtStatus, getResources().getString(R.string.bluetooth_enabled));
-                m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_searching_24px);
+                m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
             }
         }
 
         m_StopwatchStartAuto = findViewById(R.id.cbStartStopwatch);
         m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
 
+
+        arrayDevices = new ArrayList<>();
+        for (BluetoothDevice pairedDevice : mBluetoothAdapter.getBondedDevices()) {
+            Log.e(TAG, "onCreate -> pairedDevice -> " + pairedDevice.getName());
+            arrayDevices.add(pairedDevice.getName());
+        }
+        adapterDevice = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                arrayDevices
+        );
+        adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        m_SpinnerDevice.setAdapter(adapterDevice);
+//        m_SpinnerDevice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//
+//            }
+//
+//            @Override
+//            public void onNothingSelected(AdapterView<?> parent) {
+//
+//            }
+//        });
 
 
         //  prepare shared data
@@ -145,13 +169,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_StopwatchSwitch.setChecked(pref.getBoolean("ShowStopwatch", false));
         m_StopwatchStartAuto.setChecked(pref.getBoolean("StartStopwatch", false));
         m_OrientationSpinner.setSelection(pref.getInt("BlackModeOrientation", 0));
+        if( adapterDevice.getPosition(pref.getString("LastDevice", "N/A")) != 0){
+            m_SpinnerDevice.setSelection(adapterDevice.getPosition(pref.getString("LastDevice", "N/A") ));
+        }
+
         Log.d(TAG, "onCreate -> SharedPreferences -> selectedRadioButtonID:" + pref.getAll());
 
 
         editor = pref.edit();
         editor.apply();
-
-
 
 
     }
@@ -183,19 +209,6 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             }
         }
 
-        if(m_HeartrateSwitch.isChecked()) {
-            if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-                try {
-                    Log.e(TAG, "registerReceiver");
-                    registerReceiver(broadcastReceiver, broadcastReceiverUpdateIntentFilter());
-                    startBTScan();
-                } catch (Exception e) {
-                    Log.e(TAG, "broadcastReceiver isn't registered!");
-                }
-            }
-
-        }
-
     }
 
     @Override
@@ -207,15 +220,6 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             if( (mLeScanner != null || mBluetoothAdapter != null) && mBluetoothAdapter.isEnabled()) {
                 scanLeDevice(false);
             }
-
-            try {
-                unregisterReceiver(broadcastReceiver);
-            }
-            catch (Exception e){
-                Log.e(TAG, "broadcastReceiver wasn't registered!");
-            }
-
-
         }
     }
 
@@ -228,12 +232,8 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             disconnectGattServer(mGatt);
             mGatt = null;
 
-//            try {
-//                unregisterReceiver(broadcastReceiver);
-//            }
-//            catch (Exception e){
-//                Log.e(TAG, "broadcastReceiver wasn't registered!");
-//            }
+            unregister_receiver();
+
         }
 
         Thread[] threads = new Thread[Thread.activeCount()];
@@ -253,6 +253,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         editor.putBoolean("ShowClock", m_ClockSwitch.isChecked());
         editor.putBoolean("ShowStopwatch", m_StopwatchSwitch.isChecked());
         editor.putBoolean("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        editor.putString("LastDevice", m_SpinnerDevice.getSelectedItem().toString());
         editor.putInt("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
 
 // ignore the warning, because editor.apply() doesn't give me the correct preferences back on next application start
@@ -265,6 +266,19 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
     }
 
+    private void unregister_receiver( ) {
+
+        if (flagReceiver == true) {
+            try {
+                unregisterReceiver(broadcastReceiver);
+                broadcastReceiver = null;
+                flagReceiver = false;
+            } catch (Exception e) {
+                Log.d(TAG, "unregister_receiver -> broadcastReceiver wasn't registered!");
+            }
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Button methods
     public void onClickStartBlackMode(View v) {
@@ -272,11 +286,25 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     }
 
     public void onClickReloadBt(View v) {
-        m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
-        m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_clear_24px);
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) && connected_and_send_data == false) {
+            m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_clear_24px);
             startBTScan();
         }
+        else{
+            if(m_HeartrateSwitch.isChecked()) {
+                connected_and_send_data = false;
+
+                disconnectGattServer(mGatt);
+                mGatt = null;
+
+                unregister_receiver();
+
+                m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
+
+            }
+        }
+
     }
 
 
@@ -311,34 +339,6 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     // PRIVATE
 
 
-//    private void initSwipeListener(Context _Context)
-//    {
-//        ConstraintLayout mainView = findViewById(R.id.activityMainSettings);
-//
-//        mainView.setOnTouchListener(new OnSwipeTouchListener(_Context)
-//        {
-//            public void onSwipeTop()
-//            {
-//                Log.d("", "onSwipeTop: ");
-//            }
-//
-//            public void onSwipeRight()
-//            {
-//                finish();
-//            }
-//
-//            public void onSwipeLeft()
-//            {
-//                startBlackMode();
-//            }
-//
-//            public void onSwipeBottom()
-//            {
-//                Log.d("", "onSwipeBottom: ");
-//            }
-//        });
-//    }
-
     private void initSwitched() {
         m_ClockSwitch = findViewById(R.id.switchClock);
         m_StopwatchSwitch = findViewById(R.id.switchStopwatch);
@@ -346,8 +346,12 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_HeartrateSwitch = findViewById(R.id.switchHeartrate);
     }
 
+    private void initSpinner() {
+        m_SpinnerDevice = findViewById(R.id.spinnerDevice);
+    }
+
     private void initTextViews() {
-        m_BtDevice = findViewById(R.id.textViewBtDevice);
+//        m_BtDevice = findViewById(R.id.textViewBtDevice);
         m_BtStatus = findViewById(R.id.textViewBtStatus);
         m_BtData = findViewById(R.id.textViewBtData);
         m_GpsStatus = findViewById(R.id.textViewGps);
@@ -389,6 +393,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private ScanSettings settings;
     private Handler mHandler;
     private boolean mScanning;
+    private boolean flagReceiver = false;
     private GattClientCallback gattClientCallback = null;
     private BluetoothGatt mGatt;
 
@@ -396,70 +401,64 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     public void connectToDevice(BluetoothDevice device) {
         Log.e(TAG, "connectToDevice");
 
-        boolean paired = false;
-        for (BluetoothDevice pairedDevice : mBluetoothAdapter.getBondedDevices()) {
-            if (pairedDevice.getAddress().equals(device.getAddress())) {
-                paired = true;
-                break;
-            }
+        String text = device + " " + getResources().getString(R.string.connecting);
+        setTextFieldTexts(m_BtStatus, text);
+
+        if (gattClientCallback == null) {
+            gattClientCallback = new GattClientCallback();
         }
+        mGatt = device.connectGatt(this, false, gattClientCallback);
 
-        if (paired) {
-            String text = device + " " + getResources().getString(R.string.connecting);
-            setTextFieldTexts(m_BtStatus, text);
+        Log.e(TAG, "connectToDevice -> mGatt -> " + mGatt.getDevice());
 
-            if (gattClientCallback == null) {
-                gattClientCallback = new GattClientCallback();
-            }
-            mGatt = device.connectGatt(this, false, gattClientCallback);
+        if (mGatt.connect()) {
+            setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_connected));
+//                setTextFieldTexts(m_BtDevice, device.getName());
 
-            Log.e(TAG, "connectToDevice -> mGatt -> " + mGatt.getDevice());
+            m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_bluetooth_break_24px);
 
-            if (mGatt.connect()) {
-                setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_connected));
-                setTextFieldTexts(m_BtDevice, device.getName());
+            Log.e(TAG, "connectToDevice -> scanLeDevice -> false");
+            scanLeDevice(false);// will stop after first device detection
 
-                m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
-
-                Log.e(TAG, "connectToDevice -> scanLeDevice -> false");
-                scanLeDevice(false);// will stop after first device detection
-
-            } else {
-                gattClientCallback = null;
-                Log.e(TAG, "connectToDevice -> mGatt.connect() -> false");
-            }
         } else {
-            showToastMessage();
+            gattClientCallback = null;
+            Log.e(TAG, "connectToDevice -> mGatt.connect() -> false");
         }
 
     }
 
 
     private void startBTScan() {
-        Log.e(TAG, "onResume -> Start BT work");
+        Log.e(TAG, "startBTScan -> call");
 
         setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_for_devices));
+        m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_searching_24px);
 
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        } else {
+        }
+        else {
             if (Build.VERSION.SDK_INT >= 21) {
                 mLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
                 settings = new ScanSettings.Builder()
                         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                         .build();
+                Log.e(TAG, "startBTScan -> settings %s" + settings);
 
             }
 
-            Log.e(TAG, "onResume -> scanLeDevice");
+            Log.e(TAG, "startBTScan -> scanLeDevice");
+            scanLeDevice(false);
             scanLeDevice(true);
 
             mHandler.postDelayed(this::stopScan, SCAN_PERIOD);
 
             mScanning = true;
-            Log.e(TAG, "Started scanning.");
+            Log.e(TAG, "startBTScan-> Scan started");
         }
+
+
     }
 
     private void scanLeDevice(final boolean enable) {
@@ -496,11 +495,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             mBluetoothAdapter.cancelDiscovery();
             Log.e(TAG, "Stopped scanning -> mLeScanner.stopScan(mScanCallback)");
             mLeScanner.stopScan(mScanCallback);
-            setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_stopped));
+
+            if( !connected_and_send_data ){
+                setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_stopped));
+                m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
+                m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
+            }
         }
 
         mScanning = false;
-        m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
     }
 
     private ScanCallback mScanCallback = new ScanCallback() {
@@ -512,7 +515,20 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             Log.i(TAG, result.toString());
             BluetoothDevice btDevice = result.getDevice();
             Log.e(TAG, "onScanResult -> connectToDevice -> " + result.getDevice());
-            connectToDevice(btDevice);
+            if( m_SpinnerDevice.getSelectedItem().toString().equals(result.getDevice().getName())) {
+
+                Log.e(TAG, "onScanResult -> selection equal Scanresult -> " + result.getDevice());
+                connectToDevice(btDevice);
+            }
+            else{
+                if( !(arrayDevices.contains(result.getDevice().getName())))
+                {
+                    arrayDevices.add(result.getDevice().getName());
+                    adapterDevice.notifyDataSetChanged();
+                    setTextFieldTexts(m_BtStatus,getResources().getString(R.string.found_device));
+                    mLeScanner.stopScan(mScanCallback);
+                }
+            }
 
         }
 
@@ -538,7 +554,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         final IntentFilter intentFilter = new IntentFilter();
 
         intentFilter.addAction(ACTION_BROADCAST_RECEIVER);
-
+        flagReceiver = true;
         return intentFilter;
     }
 
@@ -569,6 +585,8 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             gatt.close();
             setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_disconnected));
             setTextFieldTexts(m_BtData, "");
+            m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
+
 
         }
     }
@@ -582,12 +600,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private Switch m_StopwatchSwitch;
     private Switch m_SpeedometerSwitch;
     private Switch m_HeartrateSwitch;
+    private Spinner m_SpinnerDevice;
     private ImageView m_ReloadBtImage;
     private ImageView m_ImageBtIcon;
-    private TextView m_BtDevice;
+//    private TextView m_BtDevice;
     private TextView m_BtStatus;
     private TextView m_BtData;
     private TextView m_GpsStatus;
+
+    private Boolean connected_and_send_data = false;
 
     // ---------------------------------------------------------------------------------------------
 
@@ -598,29 +619,32 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             Log.d(TAG, "onConnectionStateChange status: " + status);
             Log.d(TAG, "onConnectionStateChange newState: " + newState);
 
+            String intentAction;
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+//                    intentAction = GATT_CONNECTED;
+//                    broadcastUpdate(gatt.getDevice().getAddress(), intentAction);
+                    Log.i(TAG, "Connected to GATT server.");
+                    // Attempts to discover services after successful connection.
+                    Log.i(TAG, "Attempting to start service discovery:" +
+                            gatt.discoverServices());
 
-            if (status == BluetoothGatt.GATT_FAILURE) {
-                Log.e(TAG, "Connection Gatt failure status " + status);
-                disconnectGattServer(gatt);
-                gatt = null;
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+//                    intentAction = ACTION_GATT_DISCONNECTED;
+                    Log.i(TAG, "Disconnected from GATT server.");
+                    close(gatt.getDevice().getAddress());
+//                    broadcastUpdate(gatt.getDevice().getAddress(), intentAction);
+                }
+            } else {
 
-            } else if (status != BluetoothGatt.GATT_SUCCESS) {
-                // handle anything not SUCCESS as failure
-                Log.e(TAG, "Connection not GATT sucess status " + status);
-                disconnectGattServer(gatt);
-                gatt = null;
-            }
+                if (gatt.getDevice() != null) {
 
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                if (gatt == null) throw new AssertionError("Object cannot be null");
-                Log.d(TAG, "Connected to device " + gatt.getDevice().getAddress());
+                    disconnect_by_address(gatt.getDevice().getAddress());
+                    close(gatt.getDevice().getAddress());
 
-                gatt.discoverServices();
-
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.e(TAG, "Disconnected from device");
-
-                disconnectGattServer(gatt);
+                    Log.i(TAG, "Gatt server error");
+//                    broadcastUpdate(gatt.getDevice().getAddress(), ACTION_GATT_SERVICES_ERROR);
+                }
             }
         }
 
@@ -658,6 +682,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             } else {
                 Log.e(TAG, "Characteristic write unsuccessful, status: " + status);
                 disconnectGattServer(gatt);
+                mGatt = null;
             }
         }
 
@@ -739,6 +764,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 //                Log.e(TAG, "get null from messageBytes"+ intent.getAction());
                 sendBroadcast(intent);
                 setHrData(heartRate);
+                connected_and_send_data = true;
             } catch (Exception e) {
                 Log.d(TAG, "get null from messageBytes");
             }
@@ -746,36 +772,58 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
         }
 
-        private void disconnectGattServer(BluetoothGatt gatt) {
 
-            if (gatt != null) {
-                Log.e(TAG, "Closing Gatt connection");
+        private void disconnect_by_address(String address) {
 
-                gatt.abortReliableWrite();
-                gatt.disconnect();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {
-//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
+            if (mBluetoothAdapter == null) {
+                Log.w(TAG, "BluetoothAdapter not initialized");
+                return;
+            }
+
+            if (mGatt == null || address == null || address.length() == 0) {
+                Log.w(TAG, "No devices or gatts");
+                return;
+            }
+
+
+            if (mGatt != null) {
+                mGatt.disconnect();
+                mGatt = null;
+            }
+        }
+
+
+        private void close(String address) {
+
+            if (mBluetoothAdapter == null) {
+                Log.w(TAG, "BluetoothAdapter not initialized");
+                return;
+            }
+
+            if (mGatt == null || address == null || address.length() == 0) {
+                Log.w(TAG, "No devices or gatts");
+                return;
+            }
+
+            try {
+
+                if (mGatt.getDevice() != null && mGatt.getDevice().getAddress().equals(address)) {
+                    mGatt.close();
+                    mGatt = null;
                 }
-                gatt.close();
-                setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_disconnected));
-                setTextFieldTexts(m_BtDevice, "");
 
+            } catch (ConcurrentModificationException cmexp) {
+                cmexp.printStackTrace();
             }
         }
     }
 
 ////////////////////////////////////////
 //  updates the UI with heart rate data
-    private boolean m_ChangeImage = true;
 
     public void setHrData(int hrData) {
-        if(m_ChangeImage){
-            runOnUiThread(() -> m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_connected_24px));
-            m_ChangeImage = false;
-        }
 
+        m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_connected_24px);
         runOnUiThread(() -> m_BtData.setText(String.format(Locale.getDefault(), "%d", hrData)));
     }
 
@@ -786,3 +834,4 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         runOnUiThread(() -> textview.setText(string));
     }
 }
+

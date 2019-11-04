@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bike Computer</string>
+    <string name="app_name">Test Bike Computer</string>
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="label_data">Data:</string>
     <string name="label_device_address">Device address:</string>
@@ -14,6 +14,7 @@
     <string name="gps_enabled">GPS enabled</string>
     <string name="bluetooth_enabled">Bluetooth enabled</string>
     <string name="connecting">connecting</string>
+    <string name="found_device">Found new device</string>
     <string name="scan_for_devices">Scan for devices</string>
     <string name="scan_stopped">Scan stopped</string>
 
@@ -44,6 +45,7 @@
     <string name="tClock">Clock</string>
     <string name="tBlackMode">BlackMode</string>
     <string name="tBlackModeSettings">Orientation Settings</string>
+    <string name="tDeviceSelection">Device</string>
     <string name="tHRViewData">--</string>
     <string name="tHRView">bpm</string>
     <string name="tHRPercentage">%</string>

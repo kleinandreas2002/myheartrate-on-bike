@@ -10,6 +10,7 @@
     <color name="colorGrey">#637086</color>
     <color name="colorWhite">#ffffff</color>
     <color name="colorRed">#951f1e</color>
+    <color name="colorDarkRed">#800E02</color>
     <color name="colorLightRed">#e23223</color>
     <color name="colorBlue">#4da0e6</color>
 </resources>
