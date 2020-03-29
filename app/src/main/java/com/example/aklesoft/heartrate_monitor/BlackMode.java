@@ -1,21 +1,29 @@
 package com.example.aklesoft.heartrate_monitor;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.constraint.Group;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
@@ -30,6 +38,32 @@ import com.google.android.gms.drive.Drive;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Places;
 
+import org.osmdroid.api.IMapController;
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.IRegisterReceiver;
+import org.osmdroid.tileprovider.MapTileProviderArray;
+import org.osmdroid.tileprovider.modules.GEMFFileArchive;
+import org.osmdroid.tileprovider.modules.IArchiveFile;
+import org.osmdroid.tileprovider.modules.MapTileDownloader;
+import org.osmdroid.tileprovider.modules.MapTileFileArchiveProvider;
+import org.osmdroid.tileprovider.modules.MapTileFilesystemProvider;
+import org.osmdroid.tileprovider.modules.MapTileModuleProviderBase;
+import org.osmdroid.tileprovider.modules.NetworkAvailabliltyCheck;
+import org.osmdroid.tileprovider.modules.TileWriter;
+import org.osmdroid.tileprovider.tilesource.ITileSource;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.tileprovider.tilesource.XYTileSource;
+import org.osmdroid.tileprovider.util.SimpleRegisterReceiver;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.TilesOverlay;
+import org.osmdroid.views.overlay.compass.CompassOverlay;
+import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
 import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER;
@@ -75,6 +109,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private boolean bShowClock;
 
     public MainSettingsActivity mainSettingsActivity;
+
+    MapView map = null;
 
     /** Called when the activity is first created. */
     public void onCreate(Bundle savedInstanceState) {
@@ -218,6 +254,86 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         if(bShowNavigator) {
             lNavigatorLayout.setVisibility(View.VISIBLE);
             tNavigatorView.setVisibility(View.VISIBLE);
+
+            Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
+
+            map = this.findViewById(R.id.NavigatorMap);
+            map.setTileSource(TileSourceFactory.MAPNIK);
+            map.setMultiTouchControls(true);
+
+            IMapController mapController = map.getController();
+            mapController.setZoom(16);
+//            GeoPoint startPoint = new GeoPoint(50.9107642, 10.9161292);
+            GeoPoint startPoint = new GeoPoint(locationManager.getLastKnownLocation(provider));
+            mapController.setCenter(startPoint);
+
+            Context context = this.getApplicationContext();
+            final Context applicationContext = context.getApplicationContext();
+            final IRegisterReceiver registerReceiver = new SimpleRegisterReceiver(applicationContext);
+
+// Create a custom tile source
+//            final ITileSource tileSource = new XYTileSource(
+//                    "Mapnik", 0, 1, 18, ".png", new String[]{"http://tile.openstreetmap.org/"});
+            final ITileSource tileSource = new XYTileSource("Mapnik",
+			0, 24, 1024, ".png", new String[] {
+					"https://a.tile.openstreetmap.org/",
+					"https://b.tile.openstreetmap.org/",
+					"https://c.tile.openstreetmap.org/" },"© OpenStreetMap contributors");
+//            map.setTileSource(tileSource);
+//            final ITileSource tileSource = TileSourceFactory.MAPNIK;
+            map.setTileSource(tileSource);
+
+
+// Create a file cache modular provider
+            final TileWriter tileWriter = new TileWriter();
+            final MapTileFilesystemProvider fileSystemProvider = new MapTileFilesystemProvider(
+                    registerReceiver, tileSource);
+
+// Create an archive file modular tile provider
+            GEMFFileArchive gemfFileArchive = null; // Requires try/catch
+            try {
+                gemfFileArchive = GEMFFileArchive.getGEMFFileArchive(new File("archive-file"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            MapTileFileArchiveProvider fileArchiveProvider = new MapTileFileArchiveProvider(
+                    registerReceiver, tileSource, new IArchiveFile[] { gemfFileArchive });
+
+// Create a download modular tile provider
+            final NetworkAvailabliltyCheck networkAvailabilityCheck = new NetworkAvailabliltyCheck(context);
+            final MapTileDownloader downloaderProvider = new MapTileDownloader(
+                    tileSource, tileWriter, networkAvailabilityCheck);
+
+// Create a custom tile provider array with the custom tile source and the custom tile providers
+            final MapTileProviderArray tileProviderArray = new MapTileProviderArray(
+                    tileSource, registerReceiver, new MapTileModuleProviderBase[] {
+                    fileSystemProvider, fileArchiveProvider, downloaderProvider });
+
+// Create the mapview with the custom tile provider array
+            tileProviderArray.getTileRequestCompleteHandlers().add(map.getTileRequestCompleteHandler());
+            final TilesOverlay tilesOverlay = new TilesOverlay(tileProviderArray, this.getBaseContext());
+            tilesOverlay.setLoadingBackgroundColor(Color.TRANSPARENT);
+            map.getOverlays().add(tilesOverlay);
+
+            MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
+            mLocationOverlay.enableMyLocation();
+            mLocationOverlay.setDrawAccuracyEnabled(true);
+
+
+//            Bitmap navigation_icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_navigation_blue_24dp);
+//            Bitmap current_location_icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_current_location_24dp);
+
+            Bitmap navigation_icon = getBitmap(context, R.drawable.ic_navigation_black_48dp);
+            Bitmap current_location_icon = ((BitmapDrawable)map.getContext().getResources().getDrawable(R.drawable.person)).getBitmap();
+            mLocationOverlay.setDirectionArrow(current_location_icon, navigation_icon);
+
+            map.getOverlays().add(mLocationOverlay);
+
+            CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context), map);
+            mCompassOverlay.enableCompass();
+            map.getOverlays().add(mCompassOverlay);
+
+            map = new MapView(context, tileProviderArray);
         }
         else
         {
@@ -245,13 +361,37 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     }
 
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private static Bitmap getBitmap(VectorDrawable vectorDrawable) {
+        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
+                vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        vectorDrawable.draw(canvas);
+        return bitmap;
+    }
+
+    private static Bitmap getBitmap(Context context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+        } else if (drawable instanceof VectorDrawable) {
+            return getBitmap((VectorDrawable) drawable);
+        } else {
+            throw new IllegalArgumentException("unsupported drawable type");
+        }
+    }
+
+
+
+
     private void getDisplaySize() {
         Display display = getWindowManager().getDefaultDisplay();
         Point displaySize = new Point();
         display.getSize(displaySize);
 
     }
-
+    
 
     @Override
     protected void onResume() {
@@ -282,6 +422,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             }
         }
 
+        if(bShowNavigator) {
+            map.onResume();
+        }
 
     }
 
@@ -299,6 +442,10 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             catch (Exception e){
                 Log.e(TAG, "broadcastReceiver wasn't registered!");
             }
+        }
+
+        if(bShowNavigator) {
+            map.onPause();
         }
     }
 

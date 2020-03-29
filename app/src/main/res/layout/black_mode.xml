@@ -35,6 +35,17 @@
                 android:textColor="#ffffff"
                 android:textSize="18sp"
                 android:visibility="visible" />
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+                <org.osmdroid.views.MapView android:id="@+id/NavigatorMap"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    tilesource="Mapnik"/>
+            </LinearLayout>
+
         </LinearLayout>
 
         <LinearLayout
