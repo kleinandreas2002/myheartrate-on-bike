@@ -21,6 +21,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -50,10 +51,13 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private LocationManager locationManager;
     private String provider;
     private TextView tSpeedView;
+    private TextView tNavigatorView;
     private TextView tHRView;
     private TextView tHRPercentage;
     private TextView tTimerView;
 
+    LinearLayout lNavigatorLayout;
+    LinearLayout lDataLayout;
 
     private Location mLastLocation;
 
@@ -67,6 +71,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private boolean bShowStopwatch;
     private boolean bStartStopwatch;
     private boolean bShowSpeed;
+    private boolean bShowNavigator;
     private boolean bShowClock;
 
     public MainSettingsActivity mainSettingsActivity;
@@ -102,6 +107,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowSpeed ->"+ bShowSpeed);
 
+        bShowNavigator = getIntent().getExtras().getBoolean("ShowNavigator", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowNavigator ->"+ bShowNavigator);
+
         bShowHR = getIntent().getExtras().getBoolean("ShowHR", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowHR ->"+ bShowHR);
 
@@ -112,12 +120,16 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         iBlackModeOrientation = getIntent().getExtras().getInt( "BlackModeOrientation");
         Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->"+ iBlackModeOrientation);
 
+        lNavigatorLayout = this.findViewById(R.id.NavigatorLayout);
+        lDataLayout = this.findViewById(R.id.DataLayout);
+
         TextView tClockView = this.findViewById(R.id.ClockView);
         TextView tSpeedViewUnit = this.findViewById(R.id.SpeedViewUnit);
         TextView tHRViewUnit = this.findViewById(R.id.HRViewUnit);
         TextView tHRPercentageUnit = this.findViewById(R.id.HRPercentageUnit);
 
         tSpeedView = this.findViewById(R.id.SpeedView);
+        tNavigatorView = this.findViewById(R.id.NavigatorView);
         tHRView = this.findViewById(R.id.HRView);
         tHRPercentage = this.findViewById(R.id.HRPercentage);
         tTimerView = this.findViewById(R.id.TimerView);
@@ -203,6 +215,16 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             tClockView.setVisibility(View.GONE);
         }
 
+        if(bShowNavigator) {
+            lNavigatorLayout.setVisibility(View.VISIBLE);
+            tNavigatorView.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            tNavigatorView.setVisibility(View.GONE);
+            lNavigatorLayout.setVisibility(View.GONE);
+        }
+
         if(bShowStopwatch) {
             tTimerView.setVisibility(View.VISIBLE);
             if( bStartStopwatch ) {
@@ -214,6 +236,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             tTimerView.setVisibility(View.GONE);
         }
 
+        if( !bShowSpeed && !bShowHR && !bShowStopwatch){
+            lDataLayout.setVisibility(View.GONE);
+        }
 
         setRequestedOrientation(iBlackModeOrientation);
         getDisplaySize();

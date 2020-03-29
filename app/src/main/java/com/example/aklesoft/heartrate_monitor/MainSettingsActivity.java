@@ -164,6 +164,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
         m_SpeedometerSwitch.setChecked(pref.getBoolean("ShowSpeed", false));
+        m_NavigatorSwitch.setChecked(pref.getBoolean("ShowNavigator", false));
         m_HeartrateSwitch.setChecked(pref.getBoolean("ShowHR", false));
         m_ClockSwitch.setChecked(pref.getBoolean("ShowClock", false));
         m_StopwatchSwitch.setChecked(pref.getBoolean("ShowStopwatch", false));
@@ -249,6 +250,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
         editor = pref.edit();
         editor.putBoolean("ShowSpeed", m_SpeedometerSwitch.isChecked());
+        editor.putBoolean("ShowNavigator", m_NavigatorSwitch.isChecked());
         editor.putBoolean("ShowHR", m_HeartrateSwitch.isChecked());
         editor.putBoolean("ShowClock", m_ClockSwitch.isChecked());
         editor.putBoolean("ShowStopwatch", m_StopwatchSwitch.isChecked());
@@ -343,6 +345,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_ClockSwitch = findViewById(R.id.switchClock);
         m_StopwatchSwitch = findViewById(R.id.switchStopwatch);
         m_SpeedometerSwitch = findViewById(R.id.switchSpeedometer);
+        m_NavigatorSwitch = findViewById(R.id.switchNavigator);
         m_HeartrateSwitch = findViewById(R.id.switchHeartrate);
     }
 
@@ -377,6 +380,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         Intent intentToStartBlackMode = new Intent(getApplicationContext(), BlackMode.class);
 
         intentToStartBlackMode.putExtra("ShowSpeed", m_SpeedometerSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowNavigator", m_NavigatorSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowHR", m_HeartrateSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowStopwatch", m_StopwatchSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
@@ -599,6 +603,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private Switch m_ClockSwitch;
     private Switch m_StopwatchSwitch;
     private Switch m_SpeedometerSwitch;
+    private Switch m_NavigatorSwitch;
     private Switch m_HeartrateSwitch;
     private Spinner m_SpinnerDevice;
     private ImageView m_ReloadBtImage;
@@ -828,7 +833,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     }
 
 
-    ////////////////////////////////////////
+////////////////////////////////////////
 //  updates the UI stuff
     public void setTextFieldTexts(TextView textview, String string) {
         runOnUiThread(() -> textview.setText(string));

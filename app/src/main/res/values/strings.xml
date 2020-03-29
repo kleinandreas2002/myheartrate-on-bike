@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bike Computer</string>
+    <string name="app_name">Test Bike Computer</string>
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="label_data">Data:</string>
     <string name="label_device_address">Device address:</string>
@@ -39,7 +39,9 @@
     <string name="cbStopwatch">Start automatically</string>
     <string name="tStopwatch">Stopwatch</string>
     <string name="tSpeedometer">Speedometer</string>
+    <string name="tNavigator">Navigator</string>
     <string name="tGPS_Status">GPS disabled</string>
+    <string name="tRoute_Status">No Route loaded</string>
     <string name="tHeartrate">Heartrate</string>
     <string name="tBT_Status">Bluetooth disabled</string>
     <string name="tClock">Clock</string>
@@ -53,6 +55,7 @@
     <string name="tSpeedometerViewData">--</string>
     <string name="tSpeedometerView">kmh</string>
     <string name="tTimerView">00:00.00</string>
+    <string name="tNavigatorView">ROUTE NAVIGATION</string>
     <string name="bStartBlackMode">Start Black-Mode</string>
     <string name="rbHorizontalOrientation">Horizontal</string>
     <string name="rbVertivalOrientation">Vertical</string>
