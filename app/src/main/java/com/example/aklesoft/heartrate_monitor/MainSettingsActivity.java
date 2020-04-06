@@ -90,6 +90,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     // Maps List
     ArrayList<String> arrayMaps;
     ArrayAdapter<String> adapterMaps;
+    boolean bKmlFileFound = false;
 
     //  Save settings
     SharedPreferences pref;
@@ -176,23 +177,35 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         arrayMaps = new ArrayList<>();
         File sdcard = Environment.getExternalStorageDirectory();
         File path = new File(sdcard.getAbsolutePath()+File.separator+"my_routes"+File.separator);
-        File list[] = path.listFiles();
-        for( int i=0; i< list.length; i++)
-        {
-            if(list[i].getName().endsWith(".kml"))
-            {
-                arrayMaps.add( list[i].getAbsoluteFile().toString() );
-            }
+        if (!path.isDirectory()) {
+            path.mkdir();
         }
-        Collections.sort(arrayMaps);
 
-        adapterMaps = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_dropdown_item,
-                arrayMaps
-        );
-        adapterMaps.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        m_SpinnerMaps.setAdapter(adapterMaps);
+        if (path.exists()) {
+            Log.d(TAG, "onCreate -> SharedPreferences -> path.exists() -> " + path.exists());
 
+            File[] list = path.listFiles();
+
+            for (File file : list) {
+                if (file.getName().endsWith(".kml")) {
+                    arrayMaps.add(file.getAbsoluteFile().toString());
+                    bKmlFileFound = true;
+                    Log.d(TAG, "onCreate -> SharedPreferences -> set bKmlFileFound-> " + bKmlFileFound);
+
+                }
+            }
+            if (arrayMaps.isEmpty()) {
+                arrayMaps.add("Please add *kml file to SDCard/my_routes");
+            }
+            Collections.sort(arrayMaps);
+
+            adapterMaps = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    arrayMaps
+            );
+            adapterMaps.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            m_SpinnerMaps.setAdapter(adapterMaps);
+        }
 
 
         //  prepare shared data
@@ -420,7 +433,11 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
         intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
         intentToStartBlackMode.putExtra("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
-        intentToStartBlackMode.putExtra("SelectedMaps", arrayMaps.get(m_SpinnerMaps.getSelectedItemPosition()));
+        if (bKmlFileFound) {
+            Log.e(TAG, "SelectedMaps ->  " + m_SpinnerMaps.getSelectedItemPosition());
+
+            intentToStartBlackMode.putExtra("SelectedMaps", arrayMaps.get(m_SpinnerMaps.getSelectedItemPosition()));
+        }
 
         startActivity(intentToStartBlackMode);
     }

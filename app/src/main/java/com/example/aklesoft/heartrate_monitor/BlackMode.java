@@ -113,6 +113,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //    });
 
     float mAzimuthAngleSpeed = 0.0f;
+
+    String sSelectedMap = null;
+    public static KmlDocument mKmlDocument;
     KmlMultiGeometry kmlMultiGeometry;
     MapView map = null;
 
@@ -140,7 +143,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
 
         int iBlackModeOrientation;
-        String sSelectedMap;
+
 
         boolean bShowStopwatch = getIntent().getExtras().getBoolean("ShowStopwatch", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowStopwatch ->"+ bShowStopwatch);
@@ -163,8 +166,10 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         iBlackModeOrientation = getIntent().getExtras().getInt("BlackModeOrientation");
         Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->"+ iBlackModeOrientation);
 
-        sSelectedMap = getIntent().getExtras().getString("SelectedMaps");
-        Log.d(TAG, "BlackMode -> onCreate -> SelectedMaps ->"+ sSelectedMap);
+        if (getIntent().getExtras().containsKey("SelectedMaps")) {
+            Log.d(TAG, "BlackMode -> onCreate -> SelectedMaps ->" + sSelectedMap);
+            sSelectedMap = getIntent().getExtras().getString("SelectedMaps");
+        }
 
 
         lNavigatorLayout = this.findViewById(R.id.NavigatorLayout);
@@ -264,7 +269,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             tClockView.setVisibility(View.GONE);
         }
 
-        if(bShowNavigator) {
+        if(bShowNavigator && sSelectedMap != null) {
             lNavigatorLayout.setVisibility(View.VISIBLE);
 
             Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
@@ -273,7 +278,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
             map = this.findViewById(R.id.NavigatorMap);
             map.setTileSource(TileSourceFactory.MAPNIK);
-//            map.getOverlayManager().getTilesOverlay().setColorFilter(TilesOverlay.INVERT_COLORS);
+            //            map.getOverlayManager().getTilesOverlay().setColorFilter(TilesOverlay.INVERT_COLORS);
             mAzimuthAngleSpeed = currentGpsPosition.getBearing();
             map.setMapOrientation(-mAzimuthAngleSpeed);
 
@@ -293,10 +298,10 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             mLocationOverlay.enableMyLocation();
             mLocationOverlay.setDrawAccuracyEnabled(true);
             mLocationOverlay.enableFollowLocation();
-//            Bitmap navigation_icon = getBitmap(this, R.drawable.ic_navigation_white_48dp);
+            //            Bitmap navigation_icon = getBitmap(this, R.drawable.ic_navigation_white_48dp);
             Bitmap navigation_icon = getBitmap(this, R.drawable.ic_navigation_black_48dp);
             Bitmap current_location_icon = getBitmap(this, R.drawable.ic_navigation_green_48dp);
-//            Bitmap current_location_icon = ((BitmapDrawable)map.getContext().getResources().getDrawable(R.drawable.person)).getBitmap();
+            //            Bitmap current_location_icon = ((BitmapDrawable)map.getContext().getResources().getDrawable(R.drawable.person)).getBitmap();
             mLocationOverlay.setDirectionArrow(current_location_icon, navigation_icon);
             map.getOverlays().add(mLocationOverlay);
 
@@ -305,11 +310,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             File file = new File(sSelectedMap);
 
 
-            KmlDocument kmlDocument = new KmlDocument();
-            Log.d(TAG, "BlackMode -> onCreate -> kmlFilePath ->"+ file.getAbsolutePath());
-            boolean parseResult = kmlDocument.parseKMLFile(file);
-            Log.d(TAG, "BlackMode -> onCreate -> parseResult ->"+ parseResult);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument ->"+ kmlDocument);
+            mKmlDocument = new KmlDocument();
+            Log.d(TAG, "BlackMode -> onCreate -> kmlFilePath ->" + file.getAbsolutePath());
+            boolean parseResult = mKmlDocument.parseKMLFile(file);
+            Log.d(TAG, "BlackMode -> onCreate -> parseResult ->" + parseResult);
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument ->" + mKmlDocument);
 
 
             RotationGestureOverlay mRotationGestureOverlay = new RotationGestureOverlay(map);
@@ -318,39 +323,39 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             map.getOverlays().add(mRotationGestureOverlay);
 
 
-// commented out -> no marker in use
-// Drawable defaultMarker = getResources().getDrawable(R.drawable.marker_kml_point);
-// Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
+            // commented out -> no marker in use
+            // Drawable defaultMarker = getResources().getDrawable(R.drawable.marker_kml_point);
+            // Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
             Style defaultStyle = new Style(null, Color.parseColor("#222F99"), 10.0f, Color.parseColor("#222F99"));
 
-            Log.d(TAG, "BlackMode -> onCreate -> defaultStyle ->"+ defaultStyle);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mStyle ->"+ kmlDocument.mKmlRoot.mStyle);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.getBoundingBox ->"+ kmlDocument.mKmlRoot.getBoundingBox());
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mVisibility ->"+ kmlDocument.mKmlRoot.mVisibility);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mName ->"+ kmlDocument.mKmlRoot.mName);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mExtendedData ->"+ kmlDocument.mKmlRoot.mExtendedData);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mItems ->"+ kmlDocument.mKmlRoot.mItems);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mItems.size ->"+ kmlDocument.mKmlRoot.mItems.size());
+            Log.d(TAG, "BlackMode -> onCreate -> defaultStyle ->" + defaultStyle);
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mStyle ->" + mKmlDocument.mKmlRoot.mStyle);
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.getBoundingBox ->" + mKmlDocument.mKmlRoot.getBoundingBox());
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mVisibility ->" + mKmlDocument.mKmlRoot.mVisibility);
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mName ->" + mKmlDocument.mKmlRoot.mName);
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mExtendedData ->" + mKmlDocument.mKmlRoot.mExtendedData);
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mItems ->" + mKmlDocument.mKmlRoot.mItems);
+            Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mItems.size ->" + mKmlDocument.mKmlRoot.mItems.size());
 
-            KmlPlacemark placemark = (KmlPlacemark) kmlDocument.mKmlRoot.mItems.get(0);
-            Log.d(TAG, "BlackMode -> onCreate -> placemark ->"+ placemark);
+            KmlPlacemark placemark = (KmlPlacemark) mKmlDocument.mKmlRoot.mItems.get(0);
+            Log.d(TAG, "BlackMode -> onCreate -> placemark ->" + placemark);
 
             kmlMultiGeometry = (KmlMultiGeometry) placemark.mGeometry;
 
-            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->"+ kmlMultiGeometry);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->"+ kmlMultiGeometry.getClass());
+            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->" + kmlMultiGeometry);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->" + kmlMultiGeometry.getClass());
 
 
-            FolderOverlay kmlOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, null, kmlDocument);
+            FolderOverlay kmlOverlay = (FolderOverlay) mKmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, null, mKmlDocument);
             map.getOverlays().add(kmlOverlay);
             map.invalidate();
             Log.d(TAG, "BlackMode -> onCreate -> map ->" + map);
 
 
-// commented out -> TODO -> navigation for selected route
-//            navigation.context = this.getApplicationContext();
-//            navigation.setMap(map);
-//            navigation.setKmlMultiGeometry(kmlMultiGeometry);
+            // commented out -> TODO -> navigation for selected route
+            //            navigation.context = this.getApplicationContext();
+            //            navigation.setMap(map);
+            //            navigation.setKmlMultiGeometry(kmlMultiGeometry);
         }
         else
         {
@@ -391,7 +396,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             return;
         }
         if (bLocationManager) {
-            if(bShowNavigator) {
+            if(bShowNavigator && sSelectedMap != null) {
                 map.onResume();
             }
 
@@ -442,7 +447,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             }
         }
 
-        if(bShowNavigator) {
+        if(bShowNavigator && sSelectedMap != null) {
             map.onPause();
         }
     }
@@ -491,14 +496,16 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
             }
 
-            if (mTrackingMode){
-                //keep the map view centered on current location:
-                gpCurrentGpsPosition = new GeoPoint(currentLocation);
-                map.getController().animateTo(gpCurrentGpsPosition);
-                map.setMapOrientation(-mAzimuthAngleSpeed);
-            } else {
-                //just redraw the location overlay:
-                map.invalidate();
+            if(bShowNavigator && sSelectedMap != null) {
+                if (mTrackingMode) {
+                    //keep the map view centered on current location:
+                    gpCurrentGpsPosition = new GeoPoint(currentLocation);
+                    map.getController().animateTo(gpCurrentGpsPosition);
+                    map.setMapOrientation(-mAzimuthAngleSpeed);
+                } else {
+                    //just redraw the location overlay:
+                    map.invalidate();
+                }
             }
 
         }
