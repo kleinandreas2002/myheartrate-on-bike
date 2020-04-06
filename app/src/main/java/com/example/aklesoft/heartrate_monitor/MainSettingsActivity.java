@@ -1,7 +1,6 @@
 package com.example.aklesoft.heartrate_monitor;
 
 import android.Manifest;
-import android.app.Application;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -42,12 +41,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import org.osmdroid.tileprovider.cachemanager.CacheManager;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.views.MapView;
-
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -82,9 +76,11 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     //  Bluetooth
     private BluetoothAdapter mBluetoothAdapter;
     private List<ScanFilter> filters;
+    private Boolean connected_and_send_data = false;
 
     // Device List
-    ArrayList<String> arrayDevices;
+    ArrayList<BluetoothDevice> arrayDevices = new ArrayList<BluetoothDevice>();;
+    List<String> listArrayDevices = new ArrayList<String>();;
     ArrayAdapter<String> adapterDevice;
 
     // Maps List
@@ -137,42 +133,51 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         initButtons();
         setupOrientationSpinner();
 
-
-        filters = new ArrayList<>();
-        filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_SERVICE_UUID)).build());
-        filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_MEASUREMENT_CHAR_UUID)).build());
-
-        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        if (bluetoothManager == null) throw new AssertionError("Object cannot be null");
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, "BLE Not Supported",
-                    Toast.LENGTH_SHORT).show();
-//            finish();
-        } else {
-            if (mBluetoothAdapter.isEnabled()) {
-                setTextFieldTexts(m_BtStatus, getResources().getString(R.string.bluetooth_enabled));
-                m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
-            }
-        }
-
         m_StopwatchStartAuto = findViewById(R.id.cbStartStopwatch);
         m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
 
 
-        arrayDevices = new ArrayList<>();
-        for (BluetoothDevice pairedDevice : mBluetoothAdapter.getBondedDevices()) {
-            Log.e(TAG, "onCreate -> pairedDevice -> " + pairedDevice.getName());
-            arrayDevices.add(pairedDevice.getName());
-        }
-        adapterDevice = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_dropdown_item,
-                arrayDevices
-        );
-        adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        m_SpinnerDevice.setAdapter(adapterDevice);
+        if(!connected_and_send_data) {
+            filters = new ArrayList<>();
+            filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_SERVICE_UUID)).build());
+            filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_MEASUREMENT_CHAR_UUID)).build());
 
+            final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            if (bluetoothManager == null) throw new AssertionError("Object cannot be null");
+            mBluetoothAdapter = bluetoothManager.getAdapter();
+
+            if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                Toast.makeText(this, "BLE Not Supported",
+                        Toast.LENGTH_SHORT).show();
+                //            finish();
+            } else {
+                if (mBluetoothAdapter.isEnabled()) {
+                    setTextFieldTexts(m_BtStatus, getResources().getString(R.string.bluetooth_enabled));
+                    m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
+                }
+            }
+
+
+            for (BluetoothDevice alreadyConnectedDevice : bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)) {
+                Log.e(TAG, "onCreate -> getConnectedDevices -> " + alreadyConnectedDevice.getName());
+                arrayDevices.add(alreadyConnectedDevice);
+            }
+
+            for (BluetoothDevice bt : arrayDevices)
+                listArrayDevices.add(bt.getName());
+
+            adapterDevice = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    listArrayDevices
+            );
+            adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            m_SpinnerDevice.setAdapter(adapterDevice);
+        }
+        else {
+            m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_connected_24px);
+            setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_connected));
+
+        }
 
         arrayMaps = new ArrayList<>();
         File sdcard = Environment.getExternalStorageDirectory();
@@ -182,7 +187,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         }
 
         if (path.exists()) {
-            Log.d(TAG, "onCreate -> SharedPreferences -> path.exists() -> " + path.exists());
+            Log.d(TAG, "onCreate -> path.exists() -> " + path.exists());
 
             File[] list = path.listFiles();
 
@@ -190,7 +195,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
                 if (file.getName().endsWith(".kml")) {
                     arrayMaps.add(file.getAbsoluteFile().toString());
                     bKmlFileFound = true;
-                    Log.d(TAG, "onCreate -> SharedPreferences -> set bKmlFileFound-> " + bKmlFileFound);
+                    Log.d(TAG, "onCreate -> set bKmlFileFound-> " + bKmlFileFound);
 
                 }
             }
@@ -210,6 +215,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
         //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
+        connected_and_send_data = pref.getBoolean("connected_and_send_data", false);
         m_SpeedometerSwitch.setChecked(pref.getBoolean("ShowSpeed", false));
         m_NavigatorSwitch.setChecked(pref.getBoolean("ShowNavigator", false));
         m_HeartrateSwitch.setChecked(pref.getBoolean("ShowHR", false));
@@ -276,7 +282,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         super.onDestroy();
         Log.e(TAG, "onDestroy - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
 
-        if(m_HeartrateSwitch.isChecked()) {
+        if(m_HeartrateSwitch.isChecked() && !connected_and_send_data) {
             disconnectGattServer(mGatt);
             mGatt = null;
 
@@ -296,6 +302,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
 
         editor = pref.edit();
+        editor.putBoolean("connected_and_send_data", connected_and_send_data);
         editor.putBoolean("ShowSpeed", m_SpeedometerSwitch.isChecked());
         editor.putBoolean("ShowNavigator", m_NavigatorSwitch.isChecked());
         editor.putBoolean("ShowHR", m_HeartrateSwitch.isChecked());
@@ -335,12 +342,29 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     }
 
     public void onClickReloadBt(View v) {
+        Log.d(TAG, "onClickReloadBt -> ");
 
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) && connected_and_send_data == false) {
+        if ( !connected_and_send_data && !arrayDevices.isEmpty() ) {
+            Log.d(TAG, "onClickReloadBt -> selected device -> ");
+
+            for (BluetoothDevice device : arrayDevices){
+                Log.d(TAG, "onClickReloadBt -> selected device -> " + device.getName());
+                Log.d(TAG, "onClickReloadBt -> selected device -> " + m_SpinnerDevice.getSelectedItem().toString());
+                if (device.getName().equals(m_SpinnerDevice.getSelectedItem().toString())) {
+                    Log.d(TAG, "onClickReloadBt -> selected device -> in if -> " + device.getName());
+                    connectToDevice(device);
+                }
+            }
+
+        }
+        else if (!connected_and_send_data && getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) && !connected_and_send_data) {
+            Log.d(TAG, "onClickReloadBt -> startBTScan -> ");
+
             m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_clear_24px);
             startBTScan();
         }
         else{
+            Log.d(TAG, "onClickReloadBt -> disconnect -> ");
             if(m_HeartrateSwitch.isChecked()) {
                 connected_and_send_data = false;
 
@@ -571,20 +595,17 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             Log.i(TAG, result.toString());
             BluetoothDevice btDevice = result.getDevice();
             Log.e(TAG, "onScanResult -> connectToDevice -> " + result.getDevice());
-            if( m_SpinnerDevice.getSelectedItem().toString().equals(result.getDevice().getName())) {
+            if( !arrayDevices.isEmpty() || !(listArrayDevices.contains(result.getDevice().getName())))
+            {
+                listArrayDevices.add(btDevice.getName());
+                arrayDevices.add(btDevice);
+                adapterDevice.notifyDataSetChanged();
+                setTextFieldTexts(m_BtStatus,getResources().getString(R.string.found_device));
+                mLeScanner.stopScan(mScanCallback);
+            }
 
-                Log.e(TAG, "onScanResult -> selection equal Scanresult -> " + result.getDevice());
-                connectToDevice(btDevice);
-            }
-            else{
-                if( !(arrayDevices.contains(result.getDevice().getName())))
-                {
-                    arrayDevices.add(result.getDevice().getName());
-                    adapterDevice.notifyDataSetChanged();
-                    setTextFieldTexts(m_BtStatus,getResources().getString(R.string.found_device));
-                    mLeScanner.stopScan(mScanCallback);
-                }
-            }
+            Log.e(TAG, "onScanResult -> selection equal Scanresult -> " + result.getDevice());
+            connectToDevice(btDevice);
 
         }
 
@@ -617,11 +638,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.e(TAG, "BroadcastReceiver -> onReceive");
 // ONLY for DEBUGGING
 //            if(intent.getAction().equals(ACTION_BROADCAST_RECEIVER)){
 //
 //                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: "+ intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA)));
-//                intent.putExtra(ACTION_BROADCAST_RECEIVER_DATA, intent.getAction().equals(ACTION_BROADCAST_RECEIVER_DATA));
+//                int heartRate = Integer.parseInt(intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA));
+//                setHrData(heartRate);
+//
+////                intent.putExtra(ACTION_BROADCAST_RECEIVER_DATA, intent.getAction().equals(ACTION_BROADCAST_RECEIVER_DATA));
 //            }
         }
     };
@@ -666,7 +691,6 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private TextView m_BtData;
     private TextView m_GpsStatus;
 
-    private Boolean connected_and_send_data = false;
 
 
     // ---------------------------------------------------------------------------------------------
