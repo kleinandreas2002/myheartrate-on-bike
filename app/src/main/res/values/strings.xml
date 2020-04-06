@@ -48,6 +48,7 @@
     <string name="tBlackMode">BlackMode</string>
     <string name="tBlackModeSettings">Orientation Settings</string>
     <string name="tDeviceSelection">Device</string>
+    <string name="tMapSelection">Map</string>
     <string name="tHRViewData">--</string>
     <string name="tHRView">bpm</string>
     <string name="tHRPercentage">%</string>
@@ -55,7 +56,7 @@
     <string name="tSpeedometerViewData">--</string>
     <string name="tSpeedometerView">kmh</string>
     <string name="tTimerView">00:00.00</string>
-    <string name="tNavigatorView">ROUTE NAVIGATION</string>
+    <string name="tNavigatorView">Center Position</string>
     <string name="bStartBlackMode">Start Black-Mode</string>
     <string name="rbHorizontalOrientation">Horizontal</string>
     <string name="rbVertivalOrientation">Vertical</string>
@@ -66,5 +67,10 @@
     <string name="ivBTRefreshDescription">BT Refresh Button Image</string>
     <string name="ivBTIconDescription">BT Status Image</string>
     <string name="ivOrientationIconDescription">Device Orientation Status Image</string>
+    <string name="ivImageMapSetting">Map Selection Status Image</string>
+    <string name="ivMapDownload">Map Download Button Image</string>
+    <string name="ivGpsPosition">Set GPS Position Button Image</string>
+    <string name="download_start">Download start</string>
+
 
 </resources>

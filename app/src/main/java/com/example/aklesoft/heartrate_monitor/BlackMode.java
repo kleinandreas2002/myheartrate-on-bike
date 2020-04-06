@@ -20,6 +20,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -29,6 +31,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -39,31 +42,22 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Places;
 
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.kml.KmlDocument;
+import org.osmdroid.bonuspack.kml.KmlMultiGeometry;
+import org.osmdroid.bonuspack.kml.KmlPlacemark;
+import org.osmdroid.bonuspack.kml.Style;
 import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.IRegisterReceiver;
-import org.osmdroid.tileprovider.MapTileProviderArray;
-import org.osmdroid.tileprovider.modules.GEMFFileArchive;
-import org.osmdroid.tileprovider.modules.IArchiveFile;
-import org.osmdroid.tileprovider.modules.MapTileDownloader;
-import org.osmdroid.tileprovider.modules.MapTileFileArchiveProvider;
-import org.osmdroid.tileprovider.modules.MapTileFilesystemProvider;
-import org.osmdroid.tileprovider.modules.MapTileModuleProviderBase;
-import org.osmdroid.tileprovider.modules.NetworkAvailabliltyCheck;
-import org.osmdroid.tileprovider.modules.TileWriter;
-import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.tileprovider.tilesource.XYTileSource;
-import org.osmdroid.tileprovider.util.SimpleRegisterReceiver;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.TilesOverlay;
+import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
+import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Locale;
 
 import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER;
@@ -85,15 +79,18 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private LocationManager locationManager;
     private String provider;
     private TextView tSpeedView;
-    private TextView tNavigatorView;
     private TextView tHRView;
     private TextView tHRPercentage;
     private TextView tTimerView;
+
+    private ImageView ivImageSetPosition;
 
     LinearLayout lNavigatorLayout;
     LinearLayout lDataLayout;
 
     private Location mLastLocation;
+    private Location currentGpsPosition;
+    private GeoPoint gpCurrentGpsPosition;
 
     private Thread refreshTimerThread;
     private boolean timerRunning;
@@ -102,18 +99,29 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private boolean bLocationManager;
 
     private boolean bShowHR;
-    private boolean bShowStopwatch;
-    private boolean bStartStopwatch;
-    private boolean bShowSpeed;
     private boolean bShowNavigator;
-    private boolean bShowClock;
+    protected boolean mTrackingMode;
+
 
     public MainSettingsActivity mainSettingsActivity;
 
+//    Navigation navigation = new Navigation(new Navigation.NavigatorViewCallback() {
+//        @Override
+//        public void updateNavigatorView(String newString) {
+//            ((TextView)findViewById(R.id.NavigatorView)).setText(newString);
+//        }
+//    });
+
+    float mAzimuthAngleSpeed = 0.0f;
+    KmlMultiGeometry kmlMultiGeometry;
     MapView map = null;
 
     /** Called when the activity is first created. */
     public void onCreate(Bundle savedInstanceState) {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -131,16 +139,16 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         mainSettingsActivity = new MainSettingsActivity();
 
 
-
         int iBlackModeOrientation;
+        String sSelectedMap;
 
-        bShowStopwatch = getIntent().getExtras().getBoolean("ShowStopwatch", false);
+        boolean bShowStopwatch = getIntent().getExtras().getBoolean("ShowStopwatch", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowStopwatch ->"+ bShowStopwatch);
 
-        bStartStopwatch = getIntent().getExtras().getBoolean( "StartStopwatch", false);
+        boolean bStartStopwatch = getIntent().getExtras().getBoolean("StartStopwatch", false);
         Log.d(TAG, "BlackMode -> onCreate -> bStartStopwatch ->"+ bStartStopwatch);
 
-        bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
+        boolean bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowSpeed ->"+ bShowSpeed);
 
         bShowNavigator = getIntent().getExtras().getBoolean("ShowNavigator", false);
@@ -149,12 +157,15 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         bShowHR = getIntent().getExtras().getBoolean("ShowHR", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowHR ->"+ bShowHR);
 
-        bShowClock = getIntent().getExtras().getBoolean("ShowClock", false);
+        boolean bShowClock = getIntent().getExtras().getBoolean("ShowClock", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowClock ->"+ bShowClock);
 
-
-        iBlackModeOrientation = getIntent().getExtras().getInt( "BlackModeOrientation");
+        iBlackModeOrientation = getIntent().getExtras().getInt("BlackModeOrientation");
         Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->"+ iBlackModeOrientation);
+
+        sSelectedMap = getIntent().getExtras().getString("SelectedMaps");
+        Log.d(TAG, "BlackMode -> onCreate -> SelectedMaps ->"+ sSelectedMap);
+
 
         lNavigatorLayout = this.findViewById(R.id.NavigatorLayout);
         lDataLayout = this.findViewById(R.id.DataLayout);
@@ -164,8 +175,14 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         TextView tHRViewUnit = this.findViewById(R.id.HRViewUnit);
         TextView tHRPercentageUnit = this.findViewById(R.id.HRPercentageUnit);
 
+//        ImageView ivImageMapDownload = this.findViewById(R.id.imageMapDownload);
+//        ivImageMapDownload.setImageResource(R.drawable.ic_cloud_download_24px);
+
+        ivImageSetPosition = this.findViewById(R.id.imageSetPositon);
+        ivImageSetPosition.setImageResource(R.drawable.ic_gps_positon_24px);
+        mTrackingMode = true;
+
         tSpeedView = this.findViewById(R.id.SpeedView);
-        tNavigatorView = this.findViewById(R.id.NavigatorView);
         tHRView = this.findViewById(R.id.HRView);
         tHRPercentage = this.findViewById(R.id.HRPercentage);
         tTimerView = this.findViewById(R.id.TimerView);
@@ -217,17 +234,13 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             else {
                 locationManager.requestLocationUpdates(provider, 1, 0, this);
 
-                Location location = locationManager.getLastKnownLocation(provider);
-
-                onLocationChanged(location);
+                currentGpsPosition = locationManager.getLastKnownLocation(provider);
             }
-
         }
         else
         {
             tSpeedView.setVisibility(View.GONE);
             tSpeedViewUnit.setVisibility(View.GONE);
-
         }
 
         if(bShowHR) {
@@ -253,97 +266,100 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         if(bShowNavigator) {
             lNavigatorLayout.setVisibility(View.VISIBLE);
-            tNavigatorView.setVisibility(View.VISIBLE);
 
             Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
 
+            gpCurrentGpsPosition = new GeoPoint(locationManager.getLastKnownLocation(provider));
+
             map = this.findViewById(R.id.NavigatorMap);
             map.setTileSource(TileSourceFactory.MAPNIK);
-            map.setMultiTouchControls(true);
+//            map.getOverlayManager().getTilesOverlay().setColorFilter(TilesOverlay.INVERT_COLORS);
+            mAzimuthAngleSpeed = currentGpsPosition.getBearing();
+            map.setMapOrientation(-mAzimuthAngleSpeed);
+
 
             IMapController mapController = map.getController();
-            mapController.setZoom(16);
-//            GeoPoint startPoint = new GeoPoint(50.9107642, 10.9161292);
-            GeoPoint startPoint = new GeoPoint(locationManager.getLastKnownLocation(provider));
-            mapController.setCenter(startPoint);
-
-            Context context = this.getApplicationContext();
-            final Context applicationContext = context.getApplicationContext();
-            final IRegisterReceiver registerReceiver = new SimpleRegisterReceiver(applicationContext);
-
-// Create a custom tile source
-//            final ITileSource tileSource = new XYTileSource(
-//                    "Mapnik", 0, 1, 18, ".png", new String[]{"http://tile.openstreetmap.org/"});
-            final ITileSource tileSource = new XYTileSource("Mapnik",
-			0, 24, 1024, ".png", new String[] {
-					"https://a.tile.openstreetmap.org/",
-					"https://b.tile.openstreetmap.org/",
-					"https://c.tile.openstreetmap.org/" },"© OpenStreetMap contributors");
-//            map.setTileSource(tileSource);
-//            final ITileSource tileSource = TileSourceFactory.MAPNIK;
-            map.setTileSource(tileSource);
+            mapController.setZoom(18.0);
+            mapController.setCenter(gpCurrentGpsPosition);
 
 
-// Create a file cache modular provider
-            final TileWriter tileWriter = new TileWriter();
-            final MapTileFilesystemProvider fileSystemProvider = new MapTileFilesystemProvider(
-                    registerReceiver, tileSource);
+            InternalCompassOrientationProvider internalCompassOrientationProvider = new InternalCompassOrientationProvider(this);
+            CompassOverlay mCompassOverlay = new CompassOverlay(this, internalCompassOrientationProvider, map);
+            mCompassOverlay.enableCompass(internalCompassOrientationProvider);
+            map.getOverlays().add(mCompassOverlay);
 
-// Create an archive file modular tile provider
-            GEMFFileArchive gemfFileArchive = null; // Requires try/catch
-            try {
-                gemfFileArchive = GEMFFileArchive.getGEMFFileArchive(new File("archive-file"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            MapTileFileArchiveProvider fileArchiveProvider = new MapTileFileArchiveProvider(
-                    registerReceiver, tileSource, new IArchiveFile[] { gemfFileArchive });
-
-// Create a download modular tile provider
-            final NetworkAvailabliltyCheck networkAvailabilityCheck = new NetworkAvailabliltyCheck(context);
-            final MapTileDownloader downloaderProvider = new MapTileDownloader(
-                    tileSource, tileWriter, networkAvailabilityCheck);
-
-// Create a custom tile provider array with the custom tile source and the custom tile providers
-            final MapTileProviderArray tileProviderArray = new MapTileProviderArray(
-                    tileSource, registerReceiver, new MapTileModuleProviderBase[] {
-                    fileSystemProvider, fileArchiveProvider, downloaderProvider });
-
-// Create the mapview with the custom tile provider array
-            tileProviderArray.getTileRequestCompleteHandlers().add(map.getTileRequestCompleteHandler());
-            final TilesOverlay tilesOverlay = new TilesOverlay(tileProviderArray, this.getBaseContext());
-            tilesOverlay.setLoadingBackgroundColor(Color.TRANSPARENT);
-            map.getOverlays().add(tilesOverlay);
 
             MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
             mLocationOverlay.enableMyLocation();
             mLocationOverlay.setDrawAccuracyEnabled(true);
-
-
-//            Bitmap navigation_icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_navigation_blue_24dp);
-//            Bitmap current_location_icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_current_location_24dp);
-
-            Bitmap navigation_icon = getBitmap(context, R.drawable.ic_navigation_black_48dp);
-            Bitmap current_location_icon = ((BitmapDrawable)map.getContext().getResources().getDrawable(R.drawable.person)).getBitmap();
+            mLocationOverlay.enableFollowLocation();
+//            Bitmap navigation_icon = getBitmap(this, R.drawable.ic_navigation_white_48dp);
+            Bitmap navigation_icon = getBitmap(this, R.drawable.ic_navigation_black_48dp);
+            Bitmap current_location_icon = getBitmap(this, R.drawable.ic_navigation_green_48dp);
+//            Bitmap current_location_icon = ((BitmapDrawable)map.getContext().getResources().getDrawable(R.drawable.person)).getBitmap();
             mLocationOverlay.setDirectionArrow(current_location_icon, navigation_icon);
-
             map.getOverlays().add(mLocationOverlay);
 
-            CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context), map);
-            mCompassOverlay.enableCompass();
-            map.getOverlays().add(mCompassOverlay);
 
-            map = new MapView(context, tileProviderArray);
+            File sdcard = Environment.getExternalStorageDirectory();
+            File file = new File(sSelectedMap);
+
+
+            KmlDocument kmlDocument = new KmlDocument();
+            Log.d(TAG, "BlackMode -> onCreate -> kmlFilePath ->"+ file.getAbsolutePath());
+            boolean parseResult = kmlDocument.parseKMLFile(file);
+            Log.d(TAG, "BlackMode -> onCreate -> parseResult ->"+ parseResult);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument ->"+ kmlDocument);
+
+
+            RotationGestureOverlay mRotationGestureOverlay = new RotationGestureOverlay(map);
+            mRotationGestureOverlay.setEnabled(true);
+            map.setMultiTouchControls(true);
+            map.getOverlays().add(mRotationGestureOverlay);
+
+
+// commented out -> no marker in use
+// Drawable defaultMarker = getResources().getDrawable(R.drawable.marker_kml_point);
+// Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
+            Style defaultStyle = new Style(null, Color.parseColor("#222F99"), 10.0f, Color.parseColor("#222F99"));
+
+            Log.d(TAG, "BlackMode -> onCreate -> defaultStyle ->"+ defaultStyle);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mStyle ->"+ kmlDocument.mKmlRoot.mStyle);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.getBoundingBox ->"+ kmlDocument.mKmlRoot.getBoundingBox());
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mVisibility ->"+ kmlDocument.mKmlRoot.mVisibility);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mName ->"+ kmlDocument.mKmlRoot.mName);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mExtendedData ->"+ kmlDocument.mKmlRoot.mExtendedData);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mItems ->"+ kmlDocument.mKmlRoot.mItems);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlDocument.mKmlRoot.mItems.size ->"+ kmlDocument.mKmlRoot.mItems.size());
+
+            KmlPlacemark placemark = (KmlPlacemark) kmlDocument.mKmlRoot.mItems.get(0);
+            Log.d(TAG, "BlackMode -> onCreate -> placemark ->"+ placemark);
+
+            kmlMultiGeometry = (KmlMultiGeometry) placemark.mGeometry;
+
+            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->"+ kmlMultiGeometry);
+            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->"+ kmlMultiGeometry.getClass());
+
+
+            FolderOverlay kmlOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, null, kmlDocument);
+            map.getOverlays().add(kmlOverlay);
+            map.invalidate();
+            Log.d(TAG, "BlackMode -> onCreate -> map ->" + map);
+
+
+// commented out -> TODO -> navigation for selected route
+//            navigation.context = this.getApplicationContext();
+//            navigation.setMap(map);
+//            navigation.setKmlMultiGeometry(kmlMultiGeometry);
         }
         else
         {
-            tNavigatorView.setVisibility(View.GONE);
             lNavigatorLayout.setVisibility(View.GONE);
         }
 
         if(bShowStopwatch) {
             tTimerView.setVisibility(View.VISIBLE);
-            if( bStartStopwatch ) {
+            if(bStartStopwatch) {
                 StartTimer(getWindow().getDecorView().getRootView());
             }
         }
@@ -357,41 +373,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
 
         setRequestedOrientation(iBlackModeOrientation);
-        getDisplaySize();
     }
 
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private static Bitmap getBitmap(VectorDrawable vectorDrawable) {
-        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
-                vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        vectorDrawable.draw(canvas);
-        return bitmap;
-    }
-
-    private static Bitmap getBitmap(Context context, int drawableId) {
-        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
-        if (drawable instanceof BitmapDrawable) {
-            return ((BitmapDrawable) drawable).getBitmap();
-        } else if (drawable instanceof VectorDrawable) {
-            return getBitmap((VectorDrawable) drawable);
-        } else {
-            throw new IllegalArgumentException("unsupported drawable type");
-        }
-    }
-
-
-
-
-    private void getDisplaySize() {
-        Display display = getWindowManager().getDefaultDisplay();
-        Point displaySize = new Point();
-        display.getSize(displaySize);
-
-    }
-    
 
     @Override
     protected void onResume() {
@@ -408,7 +391,27 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             return;
         }
         if (bLocationManager) {
-            locationManager.requestLocationUpdates(provider, 1, 0, this);
+            if(bShowNavigator) {
+                map.onResume();
+            }
+
+            onLocationChanged(currentGpsPosition);
+
+//            float bearing = locationManager.getLastKnownLocation(provider).getBearing();
+//
+//            float t = (360 - bearing);
+//            if (t < 0) {
+//                t += 360;
+//            }
+//            if (t > 360) {
+//                t -= 360;
+//            }
+//            //help smooth everything out
+//            t = (int) t;
+//            t = t / 5;
+//            t = (int) t;
+//            t = t * 5;
+//            map.setMapOrientation(t);
         }
 
         if(bShowHR) {
@@ -421,11 +424,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 }
             }
         }
-
-        if(bShowNavigator) {
-            map.onResume();
-        }
-
     }
 
     @Override
@@ -461,66 +459,51 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     }
 
-
-    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.e(TAG, "BroadcastReceiver -> onReceive");
-
-            if(intent.getAction().equals(ACTION_BROADCAST_RECEIVER)){
-//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER: "+ ACTION_BROADCAST_RECEIVER));
-//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: "+ intent.getAction()));
-//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: "+ intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA)));
-//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: %d", Integer.valueOf(intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA))));
-                setHrValues(Integer.valueOf(intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA)));
-            }
-        }
-    };
-
-
-    public void setHrValues(int hrData) {
-        int iPercentage = (int) ((hrData*100.0f)/195);
-
-        runOnUiThread(() -> {
-            // Stuff that updates the UI
-            mainSettingsActivity.setTextFieldTexts(tHRView, Integer.toString(hrData));
-            mainSettingsActivity.setTextFieldTexts(tHRPercentage, Integer.toString(iPercentage));
-        });
-    }
-
-
     @Override
-    public void onLocationChanged(Location location) {
+    public void onLocationChanged(Location currentLocation) {
 
         Location pCurrentLocation;
 
-        if( location == null)
-        {
-            tSpeedView.setText("--");
-        }
-        else
-        {
-            pCurrentLocation = location;
+//        navigation.setCurrentGpsPosition(location);
+//        int mCoordinatesSize = this.kmlMultiGeometry.mItems.get(0).mCoordinates.size();
+//        if (nextWaypoint <= mCoordinatesSize)
+//            nextWaypoint = navigation.routeNavigation(nextWaypoint);
+
+        if( currentLocation != null) {
             float calcSpeed = 0.0f;
             if (mLastLocation != null) {
                 //TODO
                 calcSpeed = (float) (Math.sqrt(
-                        Math.pow(pCurrentLocation.getLongitude() - mLastLocation.getLongitude(), 2)
-                                + Math.pow(pCurrentLocation.getLatitude() - mLastLocation.getLatitude(), 2)
-                ) / (pCurrentLocation.getTime() - mLastLocation.getTime()));
+                        Math.pow(currentLocation.getLongitude() - mLastLocation.getLongitude(), 2)
+                                + Math.pow(currentLocation.getLatitude() - mLastLocation.getLatitude(), 2)
+                ) / (currentLocation.getTime() - mLastLocation.getTime()));
             }
             //if there is speed from location
-            if (pCurrentLocation.hasSpeed())
+            if (currentLocation.hasSpeed())
             {
                 //get location speed
-                calcSpeed = pCurrentLocation.getSpeed();
+                calcSpeed = currentLocation.getSpeed();
                 calcSpeed = (calcSpeed * 3.6f);
                 float roundcalcSpeed = Math.round(calcSpeed*10.0f)/10.0f;
-                mLastLocation = pCurrentLocation;
+                mLastLocation = currentLocation;
                 String text = "" + roundcalcSpeed;
                 tSpeedView.setText(text);
 
             }
+
+            if (mTrackingMode){
+                //keep the map view centered on current location:
+                gpCurrentGpsPosition = new GeoPoint(currentLocation);
+                map.getController().animateTo(gpCurrentGpsPosition);
+                map.setMapOrientation(-mAzimuthAngleSpeed);
+            } else {
+                //just redraw the location overlay:
+                map.invalidate();
+            }
+
+        }
+        else {
+            tSpeedView.setText("--");
         }
     }
 
@@ -549,37 +532,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     }
 
-
-    public void StartTimer(View view) {
-        if (!timerRunning) {
-            timerRunning = true;
-            initTimer();
-
-        } else {
-            timerRunning = false;
-            refreshTimerThread.interrupt();
-            refreshTimerThread = null;
-        }
-
-    }
-
-    public void initTimer() {
-        refreshTimerThread = new Thread(() -> {
-            while (timerRunning) {
-                time = time + 1;
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ex) {
-//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                runOnUiThread(() -> tTimerView.setText( String.format(Locale.getDefault(),"%02d:%02d:%02d", (time / 3600),((time % 3600) / 60), (time % 60) ) ));
-
-            }
-        });
-        refreshTimerThread.start();
-    }
-
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -599,5 +551,149 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
+
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.e(TAG, "BroadcastReceiver -> onReceive");
+
+            if(intent.getAction().equals(ACTION_BROADCAST_RECEIVER)){
+//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER: "+ ACTION_BROADCAST_RECEIVER));
+//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: "+ intent.getAction()));
+//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: "+ intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA)));
+//                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: %d", Integer.valueOf(intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA))));
+                setHrValues(Integer.valueOf(intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA)));
+            }
+        }
+    };
+
+
+    public void setHrValues(int hrData) {
+        int iPercentage = (int) ((hrData*100.0f)/195);
+
+        runOnUiThread(() -> {
+            // Stuff that updates the UI
+            mainSettingsActivity.setTextFieldTexts(tHRView, Integer.toString(hrData));
+            mainSettingsActivity.setTextFieldTexts(tHRPercentage, Integer.toString(iPercentage));
+        });
+    }
+
+
+    public void StartTimer(View view) {
+        if (!timerRunning) {
+            timerRunning = true;
+            initTimer();
+
+        } else {
+            timerRunning = false;
+            refreshTimerThread.interrupt();
+            refreshTimerThread = null;
+        }
+
+    }
+
+
+    public void initTimer() {
+        refreshTimerThread = new Thread(() -> {
+            while (timerRunning) {
+                time = time + 1;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+//                        Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                runOnUiThread(() -> tTimerView.setText( String.format(Locale.getDefault(),"%02d:%02d:%02d", (time / 3600),((time % 3600) / 60), (time % 60) ) ));
+
+            }
+        });
+        refreshTimerThread.start();
+    }
+
+
+    public void onClickSetGpsPosition(View view) {
+        mTrackingMode = !mTrackingMode;
+        updateUIWithTrackingMode();
+    }
+
+
+    void updateUIWithTrackingMode(){
+        if (mTrackingMode){
+            ivImageSetPosition.setImageResource(R.drawable.ic_gps_positon_24px);
+            map.getController().animateTo(gpCurrentGpsPosition);
+            map.setMapOrientation(-mAzimuthAngleSpeed);
+        } else {
+            ivImageSetPosition.setImageResource(R.drawable.ic_gps_not_fixed_24px);
+            map.setMapOrientation(0.0f);
+        }
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private static Bitmap getBitmap(VectorDrawable vectorDrawable) {
+        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
+                vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        vectorDrawable.draw(canvas);
+        return bitmap;
+    }
+
+    private static Bitmap getBitmap(Context context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+        } else if (drawable instanceof VectorDrawable) {
+            return getBitmap((VectorDrawable) drawable);
+        } else {
+            throw new IllegalArgumentException("unsupported drawable type");
+        }
+    }
+
+//    public void onClickDownloadMap(View view) {
+//        CacheManager cacheManager = new CacheManager(map);
+//        double zoomMin = map.getMinZoomLevel();
+//        double zoomMax = map.getMaxZoomLevel()+4.0;
+//        Log.d(TAG, "BlackMode -> onClickDownloadMap -> start");
+////            Toast.makeText(this, getString(R.string.download_start), Toast.LENGTH_LONG).show();
+//        cacheManager.downloadAreaAsync(this.getApplicationContext(), map.getBoundingBox(), (int)(zoomMin), (int) zoomMax);
+//        Log.d(TAG, "BlackMode -> onClickDownloadMap -> end");
+
+// DOWNLOAD in background
+//        new tileDownlaodTask().execute();
+//    }
+
+//Async task to reverse-geocode the KML point in a separate thread:
+//    private class tileDownlaodTask extends AsyncTask<Void, Void, Boolean> {
+//
+//        protected Boolean doInBackground(Void... voids) {
+//            CacheManager cacheManager = new CacheManager(map);
+//            double zoomMin = map.getMinZoomLevel();
+//            double zoomMax = map.getMaxZoomLevel()+4.0;
+//            Log.d(TAG, "BlackMode -> onClickDownloadMap -> start");
+////            Toast.makeText(this, getString(R.string.download_start), Toast.LENGTH_LONG).show();
+//            CacheManager.CacheManagerTask task = cacheManager.downloadAreaAsync(getApplicationContext(), map.getBoundingBox(), (int)(zoomMin), (int) zoomMax);
+////            Toast.makeText(this, "TEST context", Toast.LENGTH_LONG).show();
+//
+//            Log.d(TAG, "BlackMode -> onClickDownloadMap -> end");
+//            return true;
+//        }
+//        protected void onPostExecute(String result) {
+//
+//        }
+//    }
+//
+//
+//    public void onClickDownloadMap(View view) {
+//        MapView map = this.findViewById(R.id.NavigatorMap);
+//        CacheManager cacheManager = new CacheManager(map);
+//        long cacheUsage = cacheManager.currentCacheUsage() / (1024 * 1024);
+//        long cacheCapacity = cacheManager.cacheCapacity() / (1024 * 1024);
+//        float percent = 100.0f * cacheUsage / cacheCapacity;
+//        String message = "Cache usage:\n" + cacheUsage + " Mo / " + cacheCapacity + " Mo = " + (int) percent + "%";
+//        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+//    }
+
+
 }
 

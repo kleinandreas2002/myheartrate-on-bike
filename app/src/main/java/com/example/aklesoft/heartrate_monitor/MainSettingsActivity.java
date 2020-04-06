@@ -1,6 +1,7 @@
 package com.example.aklesoft.heartrate_monitor;
 
 import android.Manifest;
+import android.app.Application;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -23,6 +24,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.ParcelUuid;
 import android.support.v4.app.ActivityCompat;
@@ -40,7 +42,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import org.osmdroid.tileprovider.cachemanager.CacheManager;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.views.MapView;
+
+import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Locale;
@@ -58,6 +67,7 @@ import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
 public class MainSettingsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     public final static String TAG = MainSettingsActivity.class.getSimpleName();
 
+    public static Context context;
 
     //  UUIDs
     static final UUID HEART_RATE_SERVICE_UUID = convertFromInteger(0x180D);
@@ -77,9 +87,14 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     ArrayList<String> arrayDevices;
     ArrayAdapter<String> adapterDevice;
 
+    // Maps List
+    ArrayList<String> arrayMaps;
+    ArrayAdapter<String> adapterMaps;
+
     //  Save settings
     SharedPreferences pref;
     SharedPreferences.Editor editor;
+
 
 // ---------------------------------------------------------------------------------------------
 // Life cycle
@@ -87,6 +102,8 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate -> BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBLA");
+
+        context = getApplicationContext();
 
         setContentView(R.layout.activity_main_settings);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
@@ -103,6 +120,12 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
             }
 //            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+            }
         }
 
         // INIT layout items
@@ -148,17 +171,28 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         );
         adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         m_SpinnerDevice.setAdapter(adapterDevice);
-//        m_SpinnerDevice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parent) {
-//
-//            }
-//        });
+
+
+        arrayMaps = new ArrayList<>();
+        File sdcard = Environment.getExternalStorageDirectory();
+        File path = new File(sdcard.getAbsolutePath()+File.separator+"my_routes"+File.separator);
+        File list[] = path.listFiles();
+        for( int i=0; i< list.length; i++)
+        {
+            if(list[i].getName().endsWith(".kml"))
+            {
+                arrayMaps.add( list[i].getAbsoluteFile().toString() );
+            }
+        }
+        Collections.sort(arrayMaps);
+
+        adapterMaps = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                arrayMaps
+        );
+        adapterMaps.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        m_SpinnerMaps.setAdapter(adapterMaps);
+
 
 
         //  prepare shared data
@@ -306,7 +340,6 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
             }
         }
-
     }
 
 
@@ -351,6 +384,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
     private void initSpinner() {
         m_SpinnerDevice = findViewById(R.id.spinnerDevice);
+        m_SpinnerMaps = findViewById(R.id.spinnerMaps);
     }
 
     private void initTextViews() {
@@ -377,7 +411,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     }
 
     private void startBlackMode() {
-        Intent intentToStartBlackMode = new Intent(getApplicationContext(), BlackMode.class);
+        Intent intentToStartBlackMode = new Intent(this.getApplicationContext(), BlackMode.class);
 
         intentToStartBlackMode.putExtra("ShowSpeed", m_SpeedometerSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowNavigator", m_NavigatorSwitch.isChecked());
@@ -386,6 +420,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
         intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
         intentToStartBlackMode.putExtra("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
+        intentToStartBlackMode.putExtra("SelectedMaps", arrayMaps.get(m_SpinnerMaps.getSelectedItemPosition()));
 
         startActivity(intentToStartBlackMode);
     }
@@ -606,6 +641,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private Switch m_NavigatorSwitch;
     private Switch m_HeartrateSwitch;
     private Spinner m_SpinnerDevice;
+    private Spinner m_SpinnerMaps;
     private ImageView m_ReloadBtImage;
     private ImageView m_ImageBtIcon;
 //    private TextView m_BtDevice;
@@ -614,6 +650,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private TextView m_GpsStatus;
 
     private Boolean connected_and_send_data = false;
+
 
     // ---------------------------------------------------------------------------------------------
 
