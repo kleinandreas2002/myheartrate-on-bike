@@ -175,8 +175,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         TextView tHRViewUnit = this.findViewById(R.id.HRViewUnit);
         TextView tHRPercentageUnit = this.findViewById(R.id.HRPercentageUnit);
 
-//        ImageView ivImageMapDownload = this.findViewById(R.id.imageMapDownload);
-//        ivImageMapDownload.setImageResource(R.drawable.ic_cloud_download_24px);
+        ImageView ivImageMapDownload = this.findViewById(R.id.imageMapDownload);
+        ivImageMapDownload.setImageResource(R.drawable.ic_cloud_download_24px);
 
         ivImageSetPosition = this.findViewById(R.id.imageSetPositon);
         ivImageSetPosition.setImageResource(R.drawable.ic_gps_positon_24px);
@@ -650,7 +650,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         }
     }
 
-//    public void onClickDownloadMap(View view) {
+    public void onClickDownloadMap(View view) {
 //        CacheManager cacheManager = new CacheManager(map);
 //        double zoomMin = map.getMinZoomLevel();
 //        double zoomMax = map.getMaxZoomLevel()+4.0;
@@ -661,7 +661,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
 // DOWNLOAD in background
 //        new tileDownlaodTask().execute();
-//    }
+    }
 
 //Async task to reverse-geocode the KML point in a separate thread:
 //    private class tileDownlaodTask extends AsyncTask<Void, Void, Boolean> {
