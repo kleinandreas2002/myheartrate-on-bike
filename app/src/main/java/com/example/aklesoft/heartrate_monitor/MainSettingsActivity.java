@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.ParcelUuid;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -35,6 +36,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -42,12 +44,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import org.osmdroid.config.Configuration;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER;
@@ -55,6 +61,8 @@ import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_
 import static com.example.aklesoft.heartrate_monitor.Constants.CHARACTERISTIC_ECHO_STRING;
 import static com.example.aklesoft.heartrate_monitor.Constants.CLIENT_CHARACTERISTIC_CONFIG;
 import static com.example.aklesoft.heartrate_monitor.Constants.PERMISSION_REQUEST_FINE_LOCATION;
+import static com.example.aklesoft.heartrate_monitor.Constants.PERMISSION_REQUEST_READ_EXTERNAL_STORAGE;
+import static com.example.aklesoft.heartrate_monitor.Constants.REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS;
 import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
 
 
@@ -95,6 +103,45 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
 
 // ---------------------------------------------------------------------------------------------
+    void checkPermissions() {
+        List<String> permissions = new ArrayList<>();
+        String message = "Application permissions:";
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            message += "\nLocation to show user location.";
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            message += "\nStorage access to store map tiles.";
+        }
+        if (!permissions.isEmpty()) {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            String[] params = permissions.toArray(new String[permissions.size()]);
+            ActivityCompat.requestPermissions(this, params, REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS);
+        } // else: We already have permissions, so handle as normal
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS: {
+                Map<String, Integer> perms = new HashMap<>();
+                // Initial
+                perms.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
+                // Fill with results
+                for (int i = 0; i < permissions.length; i++)
+                    perms.put(permissions[i], grantResults[i]);
+                // Check for WRITE_EXTERNAL_STORAGE
+                Boolean storage = perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+                if (!storage) {
+                    // Permission Denied
+                    Toast.makeText(this, "Storage permission is required to store map tiles to reduce data usage and for offline usage.", Toast.LENGTH_LONG).show();
+                } // else: permission was granted, yay!
+            }
+        }
+    }
+
+// ---------------------------------------------------------------------------------------------
 // Life cycle
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
@@ -104,28 +151,33 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
         context = getApplicationContext();
 
+        checkPermissions();
+
+        Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
+
         setContentView(R.layout.activity_main_settings);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
-            }
-//            return;
-        }
+//        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
+//            }
+////            return;
+//        }
+//
+//        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_READ_EXTERNAL_STORAGE);
+//            }
+//        }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
-            }
-        }
 
         // INIT layout items
 //         initSwipeListener(this);
@@ -420,6 +472,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_StopwatchSwitch = findViewById(R.id.switchStopwatch);
         m_SpeedometerSwitch = findViewById(R.id.switchSpeedometer);
         m_NavigatorSwitch = findViewById(R.id.switchNavigator);
+        m_NavigatorSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // do something, the isChecked will be
+                // true if the switch is in the On position
+                if(isChecked && !m_SpeedometerSwitch.isChecked()){
+                    m_SpeedometerSwitch.setChecked(true);
+                }
+            }
+        });
         m_HeartrateSwitch = findViewById(R.id.switchHeartrate);
     }
 
