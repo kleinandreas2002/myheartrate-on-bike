@@ -402,21 +402,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
             onLocationChanged(currentGpsPosition);
 
-//            float bearing = locationManager.getLastKnownLocation(provider).getBearing();
-//
-//            float t = (360 - bearing);
-//            if (t < 0) {
-//                t += 360;
-//            }
-//            if (t > 360) {
-//                t -= 360;
-//            }
-//            //help smooth everything out
-//            t = (int) t;
-//            t = t / 5;
-//            t = (int) t;
-//            t = t * 5;
-//            map.setMapOrientation(t);
         }
 
         if(bShowHR) {
@@ -501,11 +486,28 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                     //keep the map view centered on current location:
                     gpCurrentGpsPosition = new GeoPoint(currentLocation);
                     map.getController().animateTo(gpCurrentGpsPosition);
-                    map.setMapOrientation(-mAzimuthAngleSpeed);
+//                    map.setMapOrientation(-mAzimuthAngleSpeed);
+
+                    float bearing = currentLocation.getBearing();
+                    float t = (360 - bearing);
+                    if (t < 0) {
+                        t += 360;
+                    }
+                    if (t > 360) {
+                        t -= 360;
+                    }
+                    //help smooth everything out
+                    t = (int) t;
+                    t = t / 5;
+                    t = (int) t;
+                    t = t * 5;
+                    map.setMapOrientation(t);
+
                 } else {
                     //just redraw the location overlay:
                     map.invalidate();
                 }
+
             }
 
         }

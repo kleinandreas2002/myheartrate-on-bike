@@ -103,7 +103,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         context = getApplicationContext();
 
         setContentView(R.layout.activity_main_settings);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -309,7 +309,9 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         editor.putBoolean("ShowClock", m_ClockSwitch.isChecked());
         editor.putBoolean("ShowStopwatch", m_StopwatchSwitch.isChecked());
         editor.putBoolean("StartStopwatch", m_StopwatchStartAuto.isChecked());
-        editor.putString("LastDevice", m_SpinnerDevice.getSelectedItem().toString());
+        if (m_SpinnerDevice.getSelectedItem() != null) {
+            editor.putString("LastDevice", m_SpinnerDevice.getSelectedItem().toString());
+        }
         editor.putInt("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
 
 // ignore the warning, because editor.apply() doesn't give me the correct preferences back on next application start
