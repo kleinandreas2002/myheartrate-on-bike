@@ -1,6 +1,7 @@
 package com.example.aklesoft.heartrate_monitor;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -95,6 +96,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
 // ---------------------------------------------------------------------------------------------
 // Life cycle
+    @SuppressLint("SourceLockedOrientationActivity")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
