@@ -19,7 +19,7 @@
             android:id="@+id/NavigatorLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="1.25"
             android:orientation="vertical"
             android:visibility="visible">
 
@@ -71,13 +71,16 @@
             </LinearLayout>
 
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-                <org.osmdroid.views.MapView android:id="@+id/NavigatorMap"
+                android:layout_height="fill_parent"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <org.osmdroid.views.MapView
+                    android:id="@+id/NavigatorMap"
+                    tilesource="Mapnik"
                     android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    tilesource="Mapnik"/>
+                    android:layout_height="fill_parent" />
             </LinearLayout>
 
         </LinearLayout>
