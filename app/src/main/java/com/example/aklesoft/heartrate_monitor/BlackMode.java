@@ -396,12 +396,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             return;
         }
         if (bLocationManager) {
-            if(bShowNavigator && sSelectedMap != null) {
-                map.onResume();
-            }
-
             onLocationChanged(currentGpsPosition);
+        }
 
+        if(bShowNavigator && sSelectedMap != null) {
+            map.onResume();
         }
 
         if(bShowHR) {
