@@ -67,10 +67,13 @@
     <string name="ivBTRefreshDescription">BT Refresh Button Image</string>
     <string name="ivBTIconDescription">BT Status Image</string>
     <string name="ivOrientationIconDescription">Device Orientation Status Image</string>
+    <string name="ivSwitchOfflineMap">Offline Map Switcher</string>
     <string name="ivImageMapSetting">Map Selection Status Image</string>
     <string name="ivMapDownload">Map Download Button Image</string>
     <string name="ivGpsPosition">Set GPS Position Button Image</string>
     <string name="download_start">Download start</string>
+    <string name="tSwitchMapColorMode">Dark Mode</string>
+    <string name="tSwitchOfflineMap">Offline Map</string>
 
 
 </resources>

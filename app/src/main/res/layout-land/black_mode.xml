@@ -31,17 +31,17 @@
                 android:visibility="visible">
 
                 <ImageView
-                    android:id="@+id/imageMapDownload"
+                    android:id="@+id/imageSetPositon"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_weight="0"
                     android:clickable="true"
-                    android:contentDescription="@string/ivMapDownload"
+                    android:contentDescription="@string/ivGpsPosition"
                     android:focusable="true"
-                    android:onClick="onClickDownloadMap"
+                    android:onClick="onClickSetGpsPosition"
                     android:padding="12dp"
                     android:visibility="visible"
-                    app:srcCompat="@drawable/ic_cloud_download_24px" />
+                    app:srcCompat="@drawable/ic_gps_positon_24px" />
 
                 <TextView
                     android:id="@+id/navigatorView"
@@ -56,17 +56,17 @@
                     android:visibility="visible" />
 
                 <ImageView
-                    android:id="@+id/imageSetPositon"
+                    android:id="@+id/imageMapDownload"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_weight="0"
                     android:clickable="true"
-                    android:contentDescription="@string/ivGpsPosition"
+                    android:contentDescription="@string/ivMapDownload"
                     android:focusable="true"
-                    android:onClick="onClickSetGpsPosition"
+                    android:onClick="onClickDownloadMap"
                     android:padding="12dp"
                     android:visibility="visible"
-                    app:srcCompat="@drawable/ic_gps_positon_24px" />
+                    app:srcCompat="@drawable/ic_cloud_download_24px" />
             </LinearLayout>
 
             <LinearLayout

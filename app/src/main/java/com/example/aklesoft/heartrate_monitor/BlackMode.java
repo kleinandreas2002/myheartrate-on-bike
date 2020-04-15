@@ -4,12 +4,15 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -51,6 +54,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
+import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
@@ -100,6 +104,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     private boolean bShowHR;
     private boolean bShowNavigator;
+    private boolean bMapColorMode;
+    private boolean bMapOfflineMode;
     protected boolean mTrackingMode;
 
 
@@ -136,8 +142,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         WindowManager.LayoutParams params = getWindow().getAttributes();
-        params.screenBrightness = 0.5f;
-        getWindow().setAttributes(params);
+//        params.screenBrightness = 0.5f;
+//        getWindow().setAttributes(params);
+
 
         setContentView(R.layout.black_mode);
 
@@ -165,6 +172,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         boolean bShowClock = getIntent().getExtras().getBoolean("ShowClock", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowClock ->" + bShowClock);
 
+        bMapColorMode = getIntent().getExtras().getBoolean("MapColorMode", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bMapColorMode ->" + bMapColorMode);
+
+        bMapOfflineMode = getIntent().getExtras().getBoolean("MapOfflineMode", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bMapOfflineMode ->" + bMapOfflineMode);
+
         iBlackModeOrientation = getIntent().getExtras().getInt("BlackModeOrientation");
         Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->" + iBlackModeOrientation);
 
@@ -182,8 +195,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         TextView tHRViewUnit = this.findViewById(R.id.HRViewUnit);
         TextView tHRPercentageUnit = this.findViewById(R.id.HRPercentageUnit);
 
-        ImageView ivImageMapDownload = this.findViewById(R.id.imageMapDownload);
-        ivImageMapDownload.setImageResource(R.drawable.ic_cloud_download_24px);
+//        ImageView ivImageMapDownload = this.findViewById(R.id.imageMapDownload);
+//        ivImageMapDownload.setImageResource(R.drawable.ic_cloud_download_24px);
 
         ivImageSetPosition = this.findViewById(R.id.imageSetPositon);
         ivImageSetPosition.setImageResource(R.drawable.ic_gps_positon_24px);
@@ -303,7 +316,59 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
             map = this.findViewById(R.id.NavigatorMap);
             map.setTileSource(TileSourceFactory.MAPNIK);
-            //            map.getOverlayManager().getTilesOverlay().setColorFilter(TilesOverlay.INVERT_COLORS);
+
+            if (bMapColorMode) {
+//                map.getOverlayManager().getTilesOverlay().setColorFilter(TilesOverlay.INVERT_COLORS);
+
+                ColorMatrix inverseMatrix = new ColorMatrix(new float[] {
+                        -1.0f, 0.0f, 0.0f, 0.0f, 255f,
+                        0.0f, -1.0f, 0.0f, 0.0f, 255f,
+                        0.0f, 0.0f, -1.0f, 0.0f, 255f,
+                        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+                });
+
+                int destinationColor = Color.parseColor("#FF2A2A2A");
+                float lr = (255.0f - Color.red(destinationColor))/255.0f;
+                float lg = (255.0f - Color.green(destinationColor))/255.0f;
+                float lb = (255.0f - Color.blue(destinationColor))/255.0f;
+                ColorMatrix grayscaleMatrix = new ColorMatrix(new float[] {
+                        lr, lg, lb, 0, 0, //
+                        lr, lg, lb, 0, 0, //
+                        lr, lg, lb, 0, 0, //
+                        0, 0, 0, 0, 255, //
+                });
+                grayscaleMatrix.preConcat(inverseMatrix);
+                int dr = Color.red(destinationColor);
+                int dg = Color.green(destinationColor);
+                int db = Color.blue(destinationColor);
+                float drf = dr / 255f;
+                float dgf = dg / 255f;
+                float dbf = db / 255f;
+                ColorMatrix tintMatrix = new ColorMatrix(new float[] {
+                        drf, 0, 0, 0, 0, //
+                        0, dgf, 0, 0, 0, //
+                        0, 0, dbf, 0, 0, //
+                        0, 0, 0, 1, 0, //
+                });
+                tintMatrix.preConcat(grayscaleMatrix);
+                float lDestination = drf * lr + dgf * lg + dbf * lb;
+                float scale = 1f - lDestination;
+                float translate = 1 - scale * 0.5f;
+                ColorMatrix scaleMatrix = new ColorMatrix(new float[] {
+                        scale, 0, 0, 0, dr * translate, //
+                        0, scale, 0, 0, dg * translate, //
+                        0, 0, scale, 0, db * translate, //
+                        0, 0, 0, 1, 0, //
+                });
+                scaleMatrix.preConcat(tintMatrix);
+                ColorMatrixColorFilter filter = new ColorMatrixColorFilter(scaleMatrix);
+                map.getOverlayManager().getTilesOverlay().setColorFilter(filter);
+            }
+
+            if (bMapOfflineMode) {
+                map.getOverlayManager().getTilesOverlay().setUseDataConnection(false);
+            }
+
             mAzimuthAngleSpeed = currentGpsPosition.getBearing();
             map.setMapOrientation(-mAzimuthAngleSpeed);
 
@@ -326,6 +391,11 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             //            Bitmap navigation_icon = getBitmap(this, R.drawable.ic_navigation_white_48dp);
             Bitmap navigation_icon = getBitmap(this, R.drawable.ic_navigation_black_48dp);
             Bitmap current_location_icon = getBitmap(this, R.drawable.ic_navigation_green_48dp);
+
+            if (bMapColorMode) {
+                navigation_icon = getBitmap(this, R.drawable.ic_navigation_red_48dp);
+                current_location_icon = getBitmap(this, R.drawable.ic_navigation_blue_48dp);
+            }
             //            Bitmap current_location_icon = ((BitmapDrawable)map.getContext().getResources().getDrawable(R.drawable.person)).getBitmap();
             mLocationOverlay.setDirectionArrow(current_location_icon, navigation_icon);
             map.getOverlays().add(mLocationOverlay);
@@ -352,6 +422,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             // Drawable defaultMarker = getResources().getDrawable(R.drawable.marker_kml_point);
             // Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
             Style defaultStyle = new Style(null, Color.parseColor("#222F99"), 10.0f, Color.parseColor("#222F99"));
+            if (bMapColorMode) {
+                defaultStyle = new Style(null, Color.parseColor("#FFFFFF"), 10.0f, Color.parseColor("#FFFFFF"));
+            }
 
             Log.d(TAG, "BlackMode -> onCreate -> defaultStyle ->" + defaultStyle);
             Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mStyle ->" + mKmlDocument.mKmlRoot.mStyle);
@@ -369,7 +442,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
             Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->" + kmlMultiGeometry);
             Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->" + kmlMultiGeometry.getClass());
-
 
             FolderOverlay kmlOverlay = (FolderOverlay) mKmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, null, mKmlDocument);
             map.getOverlays().add(kmlOverlay);

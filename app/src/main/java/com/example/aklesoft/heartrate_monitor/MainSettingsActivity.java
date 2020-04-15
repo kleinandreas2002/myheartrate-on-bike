@@ -188,8 +188,9 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         setupOrientationSpinner();
 
         m_StopwatchStartAuto = findViewById(R.id.cbStartStopwatch);
-        m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
-
+        m_ImageReloadBt = findViewById(R.id.imageBtRefresh);
+        m_ImageMapColorMode = findViewById(R.id.imageMapColorMode);
+        m_ImageMapOfflineMode = findViewById(R.id.imageMapOfflineMode);
 
         if(!connected_and_send_data) {
             filters = new ArrayList<>();
@@ -235,7 +236,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
         arrayMaps = new ArrayList<>();
         File sdcard = Environment.getExternalStorageDirectory();
-        File path = new File(sdcard.getAbsolutePath()+File.separator+"my_routes"+File.separator);
+        File path = new File(sdcard.getAbsolutePath()+File.separator+"kml"+File.separator);
         if (!path.isDirectory()) {
             path.mkdir();
         }
@@ -254,7 +255,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
                 }
             }
             if (arrayMaps.isEmpty()) {
-                arrayMaps.add("Please add *kml file to SDCard/my_routes");
+                arrayMaps.add("Please add *kml file to SDCard/kml");
             }
             Collections.sort(arrayMaps);
 
@@ -277,6 +278,10 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_StopwatchSwitch.setChecked(pref.getBoolean("ShowStopwatch", false));
         m_StopwatchStartAuto.setChecked(pref.getBoolean("StartStopwatch", false));
         m_OrientationSpinner.setSelection(pref.getInt("BlackModeOrientation", 0));
+        m_MapColorMode.setChecked(pref.getBoolean("MapColorMode", false));
+        m_MapOfflineMode.setChecked(pref.getBoolean("MapOfflineMode", false));
+
+
         if( adapterDevice.getPosition(pref.getString("LastDevice", "N/A")) != 0){
             m_SpinnerDevice.setSelection(adapterDevice.getPosition(pref.getString("LastDevice", "N/A") ));
         }
@@ -363,6 +368,9 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         editor.putBoolean("ShowClock", m_ClockSwitch.isChecked());
         editor.putBoolean("ShowStopwatch", m_StopwatchSwitch.isChecked());
         editor.putBoolean("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        editor.putBoolean("MapColorMode", m_MapColorMode.isChecked());
+        editor.putBoolean("MapOfflineMode", m_MapOfflineMode.isChecked());
+
         if (m_SpinnerDevice.getSelectedItem() != null) {
             editor.putString("LastDevice", m_SpinnerDevice.getSelectedItem().toString());
         }
@@ -416,7 +424,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         else if (!connected_and_send_data && getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) && !connected_and_send_data) {
             Log.d(TAG, "onClickReloadBt -> startBTScan -> ");
 
-            m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_clear_24px);
+            m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_clear_24px);
             startBTScan();
         }
         else{
@@ -429,7 +437,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
                 unregister_receiver();
 
-                m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
+                m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_refresh_24px);
 
             }
         }
@@ -482,6 +490,28 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             }
         });
         m_HeartrateSwitch = findViewById(R.id.switchHeartrate);
+        m_MapColorMode = findViewById(R.id.switchMapColorMode);
+        m_MapColorMode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    m_ImageMapColorMode.setImageResource(R.drawable.ic_invert_colors_24px);
+                } else {
+                    m_ImageMapColorMode.setImageResource(R.drawable.ic_invert_colors_off_24px);
+                }
+            }
+        });
+        m_MapOfflineMode = findViewById(R.id.switchOfflineMap);
+        m_MapOfflineMode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    m_ImageMapOfflineMode.setImageResource(R.drawable.ic_cloud_off_24px);
+                } else {
+                    m_ImageMapOfflineMode.setImageResource(R.drawable.ic_cloud_queue_24px);
+                }
+            }
+        });
     }
 
     private void initSpinner() {
@@ -521,7 +551,11 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         intentToStartBlackMode.putExtra("ShowStopwatch", m_StopwatchSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
         intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        intentToStartBlackMode.putExtra("MapColorMode", m_MapColorMode.isChecked());
+        intentToStartBlackMode.putExtra("MapOfflineMode", m_MapOfflineMode.isChecked());
+
         intentToStartBlackMode.putExtra("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
+
         if (bKmlFileFound) {
             Log.e(TAG, "SelectedMaps ->  " + m_SpinnerMaps.getSelectedItemPosition());
 
@@ -560,7 +594,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_connected));
 //                setTextFieldTexts(m_BtDevice, device.getName());
 
-            m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_bluetooth_break_24px);
+            m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_bluetooth_break_24px);
 
             Log.e(TAG, "connectToDevice -> scanLeDevice -> false");
             scanLeDevice(false);// will stop after first device detection
@@ -643,7 +677,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
             if( !connected_and_send_data ){
                 setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_stopped));
-                m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
+                m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_refresh_24px);
                 m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
             }
         }
@@ -746,11 +780,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private Switch m_StopwatchSwitch;
     private Switch m_SpeedometerSwitch;
     private Switch m_NavigatorSwitch;
+    private Switch m_MapOfflineMode;
+    private Switch m_MapColorMode;
     private Switch m_HeartrateSwitch;
     private Spinner m_SpinnerDevice;
     private Spinner m_SpinnerMaps;
-    private ImageView m_ReloadBtImage;
+    private ImageView m_ImageReloadBt;
     private ImageView m_ImageBtIcon;
+    private ImageView m_ImageMapOfflineMode;
+    private ImageView m_ImageMapColorMode;
 //    private TextView m_BtDevice;
     private TextView m_BtStatus;
     private TextView m_BtData;
