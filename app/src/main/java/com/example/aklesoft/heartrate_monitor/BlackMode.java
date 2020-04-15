@@ -309,7 +309,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
 
             IMapController mapController = map.getController();
-            mapController.setZoom(18.0);
+            mapController.setZoom(17.0);
             mapController.setCenter(gpCurrentGpsPosition);
 
 
