@@ -121,6 +121,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     /** Called when the activity is first created. */
     public void onCreate(Bundle savedInstanceState) {
+        Log.e(TAG, "onCreate -> BLACKMODEBLACKMODEBLACKMODEBLACKMODEBLACKMODE");
+
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
@@ -129,9 +131,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON|
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD|
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED|
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         WindowManager.LayoutParams params = getWindow().getAttributes();
         params.screenBrightness = 0.5f;
@@ -146,25 +148,25 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
 
         boolean bShowStopwatch = getIntent().getExtras().getBoolean("ShowStopwatch", false);
-        Log.d(TAG, "BlackMode -> onCreate -> bShowStopwatch ->"+ bShowStopwatch);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowStopwatch ->" + bShowStopwatch);
 
         boolean bStartStopwatch = getIntent().getExtras().getBoolean("StartStopwatch", false);
-        Log.d(TAG, "BlackMode -> onCreate -> bStartStopwatch ->"+ bStartStopwatch);
+        Log.d(TAG, "BlackMode -> onCreate -> bStartStopwatch ->" + bStartStopwatch);
 
         boolean bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
-        Log.d(TAG, "BlackMode -> onCreate -> bShowSpeed ->"+ bShowSpeed);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowSpeed ->" + bShowSpeed);
 
         bShowNavigator = getIntent().getExtras().getBoolean("ShowNavigator", false);
-        Log.d(TAG, "BlackMode -> onCreate -> bShowNavigator ->"+ bShowNavigator);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowNavigator ->" + bShowNavigator);
 
         bShowHR = getIntent().getExtras().getBoolean("ShowHR", false);
-        Log.d(TAG, "BlackMode -> onCreate -> bShowHR ->"+ bShowHR);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowHR ->" + bShowHR);
 
         boolean bShowClock = getIntent().getExtras().getBoolean("ShowClock", false);
-        Log.d(TAG, "BlackMode -> onCreate -> bShowClock ->"+ bShowClock);
+        Log.d(TAG, "BlackMode -> onCreate -> bShowClock ->" + bShowClock);
 
         iBlackModeOrientation = getIntent().getExtras().getInt("BlackModeOrientation");
-        Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->"+ iBlackModeOrientation);
+        Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->" + iBlackModeOrientation);
 
         if (getIntent().getExtras().containsKey("SelectedMaps")) {
             Log.d(TAG, "BlackMode -> onCreate -> SelectedMaps ->" + sSelectedMap);
@@ -192,7 +194,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         tHRPercentage = this.findViewById(R.id.HRPercentage);
         tTimerView = this.findViewById(R.id.TimerView);
 
-        if(bShowSpeed) {
+        if (bShowSpeed) {
 
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             if (locationManager == null) throw new AssertionError("Object cannot be null");
@@ -218,59 +220,82 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 startActivity(intent);
             }
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-//                return;
-            }
 
-            Criteria criteria = new Criteria();
-            provider = locationManager.getBestProvider(criteria, true);
-
-            if ( provider == null ) {
-                Log.d( TAG, "No location provider found!" );
-            }
-            else {
-                locationManager.requestLocationUpdates(provider, 1, 0, this);
-
-                currentGpsPosition = locationManager.getLastKnownLocation(provider);
-            }
-        }
-        else
-        {
+        } else {
             tSpeedView.setVisibility(View.GONE);
             tSpeedViewUnit.setVisibility(View.GONE);
         }
 
-        if(bShowHR) {
+        if (bShowHR) {
             tHRView.setVisibility(View.VISIBLE);
             tHRViewUnit.setVisibility(View.VISIBLE);
             tHRPercentage.setVisibility(View.VISIBLE);
             tHRPercentageUnit.setVisibility(View.VISIBLE);
-        }
-        else
-        {
+        } else {
             tHRView.setVisibility(View.GONE);
             tHRViewUnit.setVisibility(View.GONE);
             tHRPercentage.setVisibility(View.GONE);
-            tHRPercentageUnit.setVisibility(View.GONE);        }
-
-        if(bShowClock) {
-            tClockView.setVisibility(View.VISIBLE);
+            tHRPercentageUnit.setVisibility(View.GONE);
         }
-        else
-        {
+
+        if (bShowClock) {
+            tClockView.setVisibility(View.VISIBLE);
+        } else {
             tClockView.setVisibility(View.GONE);
         }
 
-        if(bShowNavigator && sSelectedMap != null) {
+        if (bShowNavigator && sSelectedMap != null) {
             lNavigatorLayout.setVisibility(View.VISIBLE);
+        }
+        else {
+            lNavigatorLayout.setVisibility(View.GONE);
+        }
+
+        if (bShowStopwatch) {
+            tTimerView.setVisibility(View.VISIBLE);
+            if (bStartStopwatch) {
+                StartTimer(getWindow().getDecorView().getRootView());
+            }
+        } else {
+            tTimerView.setVisibility(View.GONE);
+        }
+
+        if (!bShowSpeed && !bShowHR && !bShowStopwatch) {
+            lDataLayout.setVisibility(View.GONE);
+        }
+
+        setRequestedOrientation(iBlackModeOrientation);
+    }
+
+
+    @Override
+    public void onStart() {
+        Log.e(TAG, "onStart -> BLACKMODEBLACKMODEBLACKMODEBLACKMODEBLACKMODE");
+        super.onStart();
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+//                return;
+        }
+        Criteria criteria = new Criteria();
+        provider = locationManager.getBestProvider(criteria, true);
+
+        if (provider == null) {
+            Log.d(TAG, "No location provider found!");
+        } else {
+            locationManager.requestLocationUpdates(provider, 1, 0, this);
+
+            currentGpsPosition = locationManager.getLastKnownLocation(provider);
+        }
+
+        if (bShowNavigator && sSelectedMap != null) {
 
             Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
 
@@ -357,32 +382,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             //            navigation.setMap(map);
             //            navigation.setKmlMultiGeometry(kmlMultiGeometry);
         }
-        else
-        {
-            lNavigatorLayout.setVisibility(View.GONE);
-        }
-
-        if(bShowStopwatch) {
-            tTimerView.setVisibility(View.VISIBLE);
-            if(bStartStopwatch) {
-                StartTimer(getWindow().getDecorView().getRootView());
-            }
-        }
-        else
-        {
-            tTimerView.setVisibility(View.GONE);
-        }
-
-        if( !bShowSpeed && !bShowHR && !bShowStopwatch){
-            lDataLayout.setVisibility(View.GONE);
-        }
-
-        setRequestedOrientation(iBlackModeOrientation);
     }
 
 
     @Override
     protected void onResume() {
+        Log.e(TAG, "onResume -> BLACKMODEBLACKMODEBLACKMODEBLACKMODEBLACKMODE");
         super.onResume();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -399,12 +404,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             onLocationChanged(currentGpsPosition);
         }
 
-        if(bShowNavigator && sSelectedMap != null) {
+        if (bShowNavigator && sSelectedMap != null) {
             map.onResume();
         }
 
-        if(bShowHR) {
-            if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+        if (bShowHR) {
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
                 try {
                     Log.e(TAG, "registerReceiver");
                     registerReceiver(broadcastReceiver, new MainSettingsActivity().broadcastReceiverUpdateIntentFilter());
@@ -417,33 +422,31 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     @Override
     protected void onPause() {
+        Log.e(TAG, "onPause -> BLACKMODEBLACKMODEBLACKMODEBLACKMODEBLACKMODE");
+
         super.onPause();
-        if(bLocationManager) {
+        if (bLocationManager) {
             locationManager.removeUpdates(this);
         }
 
-        if(bShowHR) {
+        if (bShowHR) {
             try {
                 unregisterReceiver(broadcastReceiver);
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 Log.e(TAG, "broadcastReceiver wasn't registered!");
             }
         }
 
-        if(bShowNavigator && sSelectedMap != null) {
+        if (bShowNavigator && sSelectedMap != null) {
             map.onPause();
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-    }
 
     @Override
     public void onStop() {
+        Log.e(TAG, "onStop -> BLACKMODEBLACKMODEBLACKMODEBLACKMODEBLACKMODE");
+
         super.onStop();
 
     }
@@ -542,6 +545,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
     @Override
     protected void onDestroy() {
+        Log.e(TAG, "onDestroy -> BLACKMODEBLACKMODEBLACKMODEBLACKMODEBLACKMODE");
+
         super.onDestroy();
 
         if(refreshTimerThread != null) {
