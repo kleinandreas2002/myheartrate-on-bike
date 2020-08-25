@@ -6,6 +6,7 @@
     <string name="label_state">State:</string>
     <string name="no_data">No data</string>
     <string name="device_connected">Device connected</string>
+    <string name="device_send_data">Receive heart rate data</string>
     <string name="device_disconnected">Device disconnected</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
