@@ -321,9 +321,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //                map.getOverlayManager().getTilesOverlay().setColorFilter(TilesOverlay.INVERT_COLORS);
 
                 ColorMatrix inverseMatrix = new ColorMatrix(new float[] {
-                        -1.0f, 0.0f, 0.0f, 0.0f, 255f,
-                        0.0f, -1.0f, 0.0f, 0.0f, 255f,
-                        0.0f, 0.0f, -1.0f, 0.0f, 255f,
+                        0.0f, 0.0f, 0.0f, 0.0f, 255f,
+                        0.0f, 0.0f, 0.0f, 0.0f, 255f,
+                        0.0f, 0.0f, 0.0f, 0.0f, 255f,
                         0.0f, 0.0f, 0.0f, 1.0f, 0.0f
                 });
 
@@ -332,18 +332,18 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 float lg = (255.0f - Color.green(destinationColor))/255.0f;
                 float lb = (255.0f - Color.blue(destinationColor))/255.0f;
                 ColorMatrix grayscaleMatrix = new ColorMatrix(new float[] {
-                        lr, lg, lb, 0, 0, //
-                        lr, lg, lb, 0, 0, //
-                        lr, lg, lb, 0, 0, //
-                        0, 0, 0, 0, 255, //
+                        0.0f, 0.0f, 0.0f, 0.0f, 255f,
+                        0.0f, 0.0f, 0.0f, 0.0f, 255f,
+                        0.0f, 0.0f, 0.0f, 0.0f, 255f,
+                        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
                 });
                 grayscaleMatrix.preConcat(inverseMatrix);
                 int dr = Color.red(destinationColor);
                 int dg = Color.green(destinationColor);
                 int db = Color.blue(destinationColor);
-                float drf = dr / 255f;
-                float dgf = dg / 255f;
-                float dbf = db / 255f;
+                float drf = 0;
+                float dgf = 0;
+                float dbf = 0;
                 ColorMatrix tintMatrix = new ColorMatrix(new float[] {
                         drf, 0, 0, 0, 0, //
                         0, dgf, 0, 0, 0, //
@@ -355,9 +355,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
                 float scale = 1f - lDestination;
                 float translate = 1 - scale * 0.5f;
                 ColorMatrix scaleMatrix = new ColorMatrix(new float[] {
-                        scale, 0, 0, 0, dr * translate, //
-                        0, scale, 0, 0, dg * translate, //
-                        0, 0, scale, 0, db * translate, //
+                        scale, 0, 0, 0, 0, //
+                        0, scale, 0, 0, 0, //
+                        0, 0, scale, 0, 0, //
                         0, 0, 0, 1, 0, //
                 });
                 scaleMatrix.preConcat(tintMatrix);
