@@ -66,8 +66,11 @@ import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.milestones.MilestoneManager;
+import org.osmdroid.views.overlay.milestones.MilestoneMeterDistanceLister;
+import org.osmdroid.views.overlay.milestones.MilestoneMiddleLister;
 import org.osmdroid.views.overlay.milestones.MilestonePathDisplayer;
 import org.osmdroid.views.overlay.milestones.MilestonePixelDistanceLister;
+import org.osmdroid.views.overlay.milestones.MilestoneStep;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -803,6 +806,28 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             polyline.setColor(mDefaultStyle.mLineStyle.mColor);
 //            polyline.setWidth(Math.max(kmlLineString.mCoordinates.size() / 200.0f, 3.0f));
             polyline.setWidth(mDefaultStyle.mLineStyle.mWidth);
+
+            final Paint arrowPaint = new Paint();
+
+            arrowPaint.setColor(mDefaultStyle.mLineStyle.mColor);
+            arrowPaint.setStrokeWidth(10.0f);
+//            arrowPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+            arrowPaint.setStyle(Paint.Style.STROKE);
+            arrowPaint.setAntiAlias(true);
+            final Path arrowPath = new Path(); // a simple arrow towards the right
+            arrowPath.moveTo(- 30, - 30);
+            arrowPath.lineTo(30, 0);
+            arrowPath.lineTo(- 30, 30);
+//            arrowPath.close();
+            final List<MilestoneManager> managers = new ArrayList<>();
+            managers.add(new MilestoneManager(
+//                    new MilestonePixelDistanceLister(200, 200),
+//                    new MilestoneMiddleLister(100),
+                    new MilestoneMeterDistanceLister(100),
+                    new MilestonePathDisplayer(0, true, arrowPath, arrowPaint)
+            ));
+            polyline.setMilestoneManagers(managers);
+
         }
 
         @Override
