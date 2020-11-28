@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,7 +12,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Point;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
@@ -30,7 +30,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -46,22 +45,35 @@ import com.google.android.gms.location.places.Places;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
+import org.osmdroid.bonuspack.kml.KmlFeature;
+import org.osmdroid.bonuspack.kml.KmlLineString;
 import org.osmdroid.bonuspack.kml.KmlMultiGeometry;
 import org.osmdroid.bonuspack.kml.KmlPlacemark;
+import org.osmdroid.bonuspack.kml.KmlPoint;
+import org.osmdroid.bonuspack.kml.KmlPolygon;
+import org.osmdroid.bonuspack.kml.KmlTrack;
 import org.osmdroid.bonuspack.kml.Style;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
-import org.osmdroid.views.overlay.TilesOverlay;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.Polygon;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
+import org.osmdroid.views.overlay.milestones.MilestoneManager;
+import org.osmdroid.views.overlay.milestones.MilestonePathDisplayer;
+import org.osmdroid.views.overlay.milestones.MilestonePixelDistanceLister;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER;
@@ -421,10 +433,12 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             // commented out -> no marker in use
             // Drawable defaultMarker = getResources().getDrawable(R.drawable.marker_kml_point);
             // Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
+
             Style defaultStyle = new Style(null, Color.parseColor("#222F99"), 10.0f, Color.parseColor("#222F99"));
             if (bMapColorMode) {
                 defaultStyle = new Style(null, Color.parseColor("#FFFFFF"), 10.0f, Color.parseColor("#FFFFFF"));
             }
+            KmlFeature.Styler myStyler = new MyKmlStyler(defaultStyle);
 
             Log.d(TAG, "BlackMode -> onCreate -> defaultStyle ->" + defaultStyle);
             Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mStyle ->" + mKmlDocument.mKmlRoot.mStyle);
@@ -435,15 +449,8 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mItems ->" + mKmlDocument.mKmlRoot.mItems);
             Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mItems.size ->" + mKmlDocument.mKmlRoot.mItems.size());
 
-            KmlPlacemark placemark = (KmlPlacemark) mKmlDocument.mKmlRoot.mItems.get(0);
-            Log.d(TAG, "BlackMode -> onCreate -> placemark ->" + placemark);
 
-            kmlMultiGeometry = (KmlMultiGeometry) placemark.mGeometry;
-
-            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->" + kmlMultiGeometry);
-            Log.d(TAG, "BlackMode -> onCreate -> kmlMultiGeometry ->" + kmlMultiGeometry.getClass());
-
-            FolderOverlay kmlOverlay = (FolderOverlay) mKmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, null, mKmlDocument);
+            FolderOverlay kmlOverlay = (FolderOverlay) mKmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, myStyler, mKmlDocument);
             map.getOverlays().add(kmlOverlay);
             map.invalidate();
             Log.d(TAG, "BlackMode -> onCreate -> map ->" + map);
@@ -779,6 +786,50 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 //    }
 
+
+
+
+    class MyKmlStyler implements KmlFeature.Styler {
+        Style mDefaultStyle;
+
+        MyKmlStyler(Style defaultStyle) {
+            mDefaultStyle = defaultStyle;
+        }
+
+        @Override
+        public void onLineString(Polyline polyline, KmlPlacemark kmlPlacemark, KmlLineString kmlLineString) {
+            //Custom styling:
+//            polyline.setColor(Color.GREEN);
+            polyline.setColor(mDefaultStyle.mLineStyle.mColor);
+//            polyline.setWidth(Math.max(kmlLineString.mCoordinates.size() / 200.0f, 3.0f));
+            polyline.setWidth(mDefaultStyle.mLineStyle.mWidth);
+        }
+
+        @Override
+        public void onPolygon(Polygon polygon, KmlPlacemark kmlPlacemark, KmlPolygon kmlPolygon) {
+            //Keeping default styling:
+            kmlPolygon.applyDefaultStyling(polygon, mDefaultStyle, kmlPlacemark, mKmlDocument, map);
+        }
+
+        @Override
+        public void onTrack(Polyline polyline, KmlPlacemark kmlPlacemark, KmlTrack kmlTrack) {
+            //Keeping default styling:
+            kmlTrack.applyDefaultStyling(polyline, mDefaultStyle, kmlPlacemark, mKmlDocument, map);
+        }
+
+        @Override
+        public void onPoint(Marker marker, KmlPlacemark kmlPlacemark, KmlPoint kmlPoint) {
+            //Styling based on ExtendedData properties:
+            if (kmlPlacemark.getExtendedData("maxspeed") != null)
+                kmlPlacemark.mStyle = "maxspeed";
+            kmlPoint.applyDefaultStyling(marker, mDefaultStyle, kmlPlacemark, mKmlDocument, map);
+        }
+
+        @Override
+        public void onFeature(Overlay overlay, KmlFeature kmlFeature) {
+            //If nothing to do, do nothing.
+        }
+    }
 
 }
 
