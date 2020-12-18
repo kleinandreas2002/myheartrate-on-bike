@@ -4,7 +4,7 @@ android {
     compileSdkVersion 26
     buildToolsVersion '28.0.3'
     defaultConfig {
-        applicationId "com.example.aklesoft.heartrate_monitor_prerelease"
+        applicationId "com.example.aklesoft.heartrate_monitor"
         minSdkVersion 21
         targetSdkVersion 26
         versionCode 1
