@@ -47,6 +47,18 @@
                     android:id="@+id/navigatorView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:clickable="false"
+                    android:focusable="true"
+                    android:textAlignment="center"
+                    android:textColor="#ffffff"
+                    android:textSize="36sp"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/routeInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:clickable="false"
                     android:focusable="true"

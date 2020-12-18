@@ -67,10 +67,7 @@ import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.milestones.MilestoneManager;
 import org.osmdroid.views.overlay.milestones.MilestoneMeterDistanceLister;
-import org.osmdroid.views.overlay.milestones.MilestoneMiddleLister;
 import org.osmdroid.views.overlay.milestones.MilestonePathDisplayer;
-import org.osmdroid.views.overlay.milestones.MilestonePixelDistanceLister;
-import org.osmdroid.views.overlay.milestones.MilestoneStep;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -121,6 +118,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private boolean bShowNavigator;
     private boolean bMapColorMode;
     private boolean bMapOfflineMode;
+    private boolean bMapDirectionArrows;
     protected boolean mTrackingMode;
 
 
@@ -192,6 +190,9 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 
         bMapOfflineMode = getIntent().getExtras().getBoolean("MapOfflineMode", false);
         Log.d(TAG, "BlackMode -> onCreate -> bMapOfflineMode ->" + bMapOfflineMode);
+
+        bMapDirectionArrows = getIntent().getExtras().getBoolean("MapDirectionArrows", false);
+        Log.d(TAG, "BlackMode -> onCreate -> bMapDirectionArrows ->" + bMapDirectionArrows);
 
         iBlackModeOrientation = getIntent().getExtras().getInt("BlackModeOrientation");
         Log.d(TAG, "BlackMode -> onCreate -> BlackModeOrientation ->" + iBlackModeOrientation);
@@ -441,7 +442,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             if (bMapColorMode) {
                 defaultStyle = new Style(null, Color.parseColor("#FFFFFF"), 10.0f, Color.parseColor("#FFFFFF"));
             }
-            KmlFeature.Styler myStyler = new MyKmlStyler(defaultStyle);
 
             Log.d(TAG, "BlackMode -> onCreate -> defaultStyle ->" + defaultStyle);
             Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mStyle ->" + mKmlDocument.mKmlRoot.mStyle);
@@ -452,24 +452,24 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mItems ->" + mKmlDocument.mKmlRoot.mItems);
             Log.d(TAG, "BlackMode -> onCreate -> mKmlDocument.mKmlRoot.mItems.size ->" + mKmlDocument.mKmlRoot.mItems.size());
 
-
-            FolderOverlay kmlOverlay = (FolderOverlay) mKmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, myStyler, mKmlDocument);
+// add direction arrows to route overlay
+            KmlFeature.Styler arrowStyle = null;
+            if (bMapDirectionArrows) {
+                arrowStyle = new MyKmlStyler(defaultStyle);
+            }
+            FolderOverlay kmlOverlay = (FolderOverlay) mKmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, arrowStyle, mKmlDocument);
+//            FolderOverlay kmlOverlay = (FolderOverlay) mKmlDocument.mKmlRoot.buildOverlay(map, defaultStyle, null, mKmlDocument);
             map.getOverlays().add(kmlOverlay);
             map.invalidate();
             Log.d(TAG, "BlackMode -> onCreate -> map ->" + map);
 
-
-            // commented out -> TODO -> navigation for selected route
-            //            navigation.context = this.getApplicationContext();
-            //            navigation.setMap(map);
-            //            navigation.setKmlMultiGeometry(kmlMultiGeometry);
         }
     }
 
 
     @Override
     protected void onResume() {
-        Log.e(TAG, "onResume -> BLACKMODEBLACKMODEBLACKMODEBLACKMODEBLACKMODE");
+        Log.e(TAG, "onResume -> BLACKMODE");
         super.onResume();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -790,8 +790,6 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
 //    }
 
 
-
-
     class MyKmlStyler implements KmlFeature.Styler {
         Style mDefaultStyle;
 
@@ -823,7 +821,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             managers.add(new MilestoneManager(
 //                    new MilestonePixelDistanceLister(200, 200),
 //                    new MilestoneMiddleLister(100),
-                    new MilestoneMeterDistanceLister(100),
+                    new MilestoneMeterDistanceLister(300),
                     new MilestonePathDisplayer(0, true, arrowPath, arrowPaint)
             ));
             polyline.setMilestoneManagers(managers);

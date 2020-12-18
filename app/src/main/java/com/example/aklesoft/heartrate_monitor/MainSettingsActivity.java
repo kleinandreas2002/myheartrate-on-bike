@@ -192,6 +192,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_ImageReloadBt = findViewById(R.id.imageBtRefresh);
         m_ImageMapColorMode = findViewById(R.id.imageMapColorMode);
         m_ImageMapOfflineMode = findViewById(R.id.imageMapOfflineMode);
+        m_ImageMapRouteDirection = findViewById(R.id.imageMapDirectionArrows);
 
         if(!connected_and_send_data) {
             filters = new ArrayList<>();
@@ -275,6 +276,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_OrientationSpinner.setSelection(pref.getInt("BlackModeOrientation", 0));
         m_MapColorMode.setChecked(pref.getBoolean("MapColorMode", false));
         m_MapOfflineMode.setChecked(pref.getBoolean("MapOfflineMode", false));
+        m_MapDirectionArrows.setChecked(pref.getBoolean("MapDirectionArrows", false));
 
 
         if( adapterDevice.getPosition(pref.getString("LastDevice", "N/A")) != 0){
@@ -380,6 +382,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         editor.putBoolean("StartStopwatch", m_StopwatchStartAuto.isChecked());
         editor.putBoolean("MapColorMode", m_MapColorMode.isChecked());
         editor.putBoolean("MapOfflineMode", m_MapOfflineMode.isChecked());
+        editor.putBoolean("MapDirectionArrows", m_MapDirectionArrows.isChecked());
 
         if (m_SpinnerDevice.getSelectedItem() != null) {
             editor.putString("LastDevice", m_SpinnerDevice.getSelectedItem().toString());
@@ -533,6 +536,17 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
                 }
             }
         });
+        m_MapDirectionArrows = findViewById(R.id.switchMapDirectionArrows);
+        m_MapDirectionArrows.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    m_ImageMapRouteDirection.setImageResource(R.drawable.ic_route_direction_button_24px);
+                } else {
+                    m_ImageMapRouteDirection.setImageResource(R.drawable.ic_route_direction_off_button_24px);
+                }
+            }
+        });
     }
 
     private void initSpinner() {
@@ -572,6 +586,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         intentToStartBlackMode.putExtra("ShowStopwatch", m_StopwatchSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
         intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        intentToStartBlackMode.putExtra("MapDirectionArrows", m_MapDirectionArrows.isChecked());
         intentToStartBlackMode.putExtra("MapColorMode", m_MapColorMode.isChecked());
         intentToStartBlackMode.putExtra("MapOfflineMode", m_MapOfflineMode.isChecked());
 
@@ -812,6 +827,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private Switch m_StopwatchSwitch;
     private Switch m_SpeedometerSwitch;
     private Switch m_NavigatorSwitch;
+    private Switch m_MapDirectionArrows;
     private Switch m_MapOfflineMode;
     private Switch m_MapColorMode;
     private Switch m_HeartrateSwitch;
@@ -820,6 +836,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private ImageView m_ImageReloadBt;
     private ImageView m_ImageBtIcon;
     private ImageView m_ImageMapOfflineMode;
+    private ImageView m_ImageMapRouteDirection;
     private ImageView m_ImageMapColorMode;
     //    private TextView m_BtDevice;
     private TextView m_BtStatus;
