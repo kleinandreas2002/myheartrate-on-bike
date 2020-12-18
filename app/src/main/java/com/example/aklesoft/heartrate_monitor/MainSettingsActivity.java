@@ -204,25 +204,27 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             mBluetoothAdapter = bluetoothManager.getAdapter();
 
             if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-                Toast.makeText(this, "BLE Not Supported",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getResources().getString(R.string.ble_not_supported),
+                        Toast.LENGTH_LONG).show();
                 //            finish();
             }
 
-            for (BluetoothDevice alreadyConnectedDevice : bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)) {
-                Log.e(TAG, "onCreate -> getConnectedDevices -> " + alreadyConnectedDevice.getName());
-                arrayDevices.add(alreadyConnectedDevice);
+            if (mBluetoothAdapter != null) {
+                for (BluetoothDevice alreadyConnectedDevice : bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)) {
+                    Log.e(TAG, "onCreate -> getConnectedDevices -> " + alreadyConnectedDevice.getName());
+                    arrayDevices.add(alreadyConnectedDevice);
+                }
+
+                for (BluetoothDevice bt : arrayDevices)
+                    listArrayDevices.add(bt.getName());
+
+                adapterDevice = new ArrayAdapter<>(this,
+                        android.R.layout.simple_spinner_dropdown_item,
+                        listArrayDevices
+                );
+                adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                m_SpinnerDevice.setAdapter(adapterDevice);
             }
-
-            for (BluetoothDevice bt : arrayDevices)
-                listArrayDevices.add(bt.getName());
-
-            adapterDevice = new ArrayAdapter<>(this,
-                    android.R.layout.simple_spinner_dropdown_item,
-                    listArrayDevices
-            );
-            adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            m_SpinnerDevice.setAdapter(adapterDevice);
         }
         else {
             m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_connected_24px);
@@ -278,9 +280,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_MapOfflineMode.setChecked(pref.getBoolean("MapOfflineMode", false));
         m_MapDirectionArrows.setChecked(pref.getBoolean("MapDirectionArrows", false));
 
-
-        if( adapterDevice.getPosition(pref.getString("LastDevice", "N/A")) != 0){
-            m_SpinnerDevice.setSelection(adapterDevice.getPosition(pref.getString("LastDevice", "N/A") ));
+        if (mBluetoothAdapter != null) {
+            if (adapterDevice.getPosition(pref.getString("LastDevice", "N/A")) != 0) {
+                m_SpinnerDevice.setSelection(adapterDevice.getPosition(pref.getString("LastDevice", "N/A")));
+            }
+        }
+        else {
+            setTextFieldTexts(m_BtStatus, getResources().getString(R.string.ble_not_supported));
+            m_ImageReloadBt.setClickable(false);
+            m_ImageReloadBt.setImageResource(0);
         }
 
         Log.d(TAG, "onCreate -> SharedPreferences -> selectedRadioButtonID:" + pref.getAll());
@@ -305,11 +313,12 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     protected void onResume() {
         super.onResume();
         Log.e(TAG, "onResume - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
-
-        if (mBluetoothAdapter.isEnabled() && !connected_and_send_data) {
-            setTextFieldTexts(m_BtStatus, getResources().getString(R.string.bluetooth_enabled));
-            m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
-            m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_refresh_24px);
+        if (mBluetoothAdapter != null) {
+            if (mBluetoothAdapter.isEnabled() && !connected_and_send_data) {
+                setTextFieldTexts(m_BtStatus, getResources().getString(R.string.bluetooth_enabled));
+                m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
+                m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_refresh_24px);
+            }
         }
 
         if (mHandler == null) {
@@ -332,9 +341,11 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         super.onPause();
         Log.e(TAG, "onPause - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
 
-        if(m_HeartrateSwitch.isChecked()) {
-            if( (mLeScanner != null || mBluetoothAdapter != null) && mBluetoothAdapter.isEnabled()) {
-                scanLeDevice(false);
+        if (mBluetoothAdapter != null) {
+            if (m_HeartrateSwitch.isChecked()) {
+                if ((mLeScanner != null || mBluetoothAdapter != null) && mBluetoothAdapter.isEnabled()) {
+                    scanLeDevice(false);
+                }
             }
         }
     }
