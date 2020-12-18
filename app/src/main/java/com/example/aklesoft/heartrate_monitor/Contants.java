@@ -4,7 +4,9 @@ import java.util.UUID;
 
 class Constants {
 
-    public static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
+    public static final int PERMISSION_REQUEST_FINE_LOCATION = 331;
+    public static final int PERMISSION_REQUEST_READ_EXTERNAL_STORAGE = 332;
+    public static final int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 333;
 
     public static String SERVICE_STRING = "0000180d-0000-1000-8000-00805f9b34fb";
     public static UUID SERVICE_UUID = UUID.fromString(SERVICE_STRING);

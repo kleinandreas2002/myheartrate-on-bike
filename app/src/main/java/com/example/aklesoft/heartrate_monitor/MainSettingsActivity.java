@@ -1,6 +1,8 @@
 package com.example.aklesoft.heartrate_monitor;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -23,8 +25,10 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.ParcelUuid;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -33,6 +37,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -40,10 +45,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import org.osmdroid.config.Configuration;
+
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_RECEIVER;
@@ -51,6 +62,8 @@ import static com.example.aklesoft.heartrate_monitor.Constants.ACTION_BROADCAST_
 import static com.example.aklesoft.heartrate_monitor.Constants.CHARACTERISTIC_ECHO_STRING;
 import static com.example.aklesoft.heartrate_monitor.Constants.CLIENT_CHARACTERISTIC_CONFIG;
 import static com.example.aklesoft.heartrate_monitor.Constants.PERMISSION_REQUEST_FINE_LOCATION;
+import static com.example.aklesoft.heartrate_monitor.Constants.PERMISSION_REQUEST_READ_EXTERNAL_STORAGE;
+import static com.example.aklesoft.heartrate_monitor.Constants.REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS;
 import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
 
 
@@ -58,6 +71,7 @@ import static com.example.aklesoft.heartrate_monitor.Constants.SCAN_PERIOD;
 public class MainSettingsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     public final static String TAG = MainSettingsActivity.class.getSimpleName();
 
+    public static Context context;
 
     //  UUIDs
     static final UUID HEART_RATE_SERVICE_UUID = convertFromInteger(0x180D);
@@ -72,38 +86,99 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     //  Bluetooth
     private BluetoothAdapter mBluetoothAdapter;
     private List<ScanFilter> filters;
+    private Boolean connected_and_send_data = false;
 
     // Device List
-    ArrayList<String> arrayDevices;
+    ArrayList<BluetoothDevice> arrayDevices = new ArrayList<BluetoothDevice>();;
+    List<String> listArrayDevices = new ArrayList<String>();;
     ArrayAdapter<String> adapterDevice;
+
+    // Maps List
+    ArrayList<String> arrayMaps;
+    ArrayAdapter<String> adapterMaps;
+    boolean bKmlFileFound = false;
 
     //  Save settings
     SharedPreferences pref;
     SharedPreferences.Editor editor;
 
-// ---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    void checkPermissions() {
+        List<String> permissions = new ArrayList<>();
+        String message = "Application permissions:";
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            message += "\nLocation to show user location.";
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            message += "\nStorage access to store map tiles.";
+        }
+        if (!permissions.isEmpty()) {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            String[] params = permissions.toArray(new String[permissions.size()]);
+            ActivityCompat.requestPermissions(this, params, REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS);
+        } // else: We already have permissions, so handle as normal
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS: {
+                Map<String, Integer> perms = new HashMap<>();
+                // Initial
+                perms.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
+                // Fill with results
+                for (int i = 0; i < permissions.length; i++)
+                    perms.put(permissions[i], grantResults[i]);
+                // Check for WRITE_EXTERNAL_STORAGE
+                Boolean storage = perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+                if (!storage) {
+                    // Permission Denied
+                    Toast.makeText(this, "Storage permission is required to store map tiles to reduce data usage and for offline usage.", Toast.LENGTH_LONG).show();
+                } // else: permission was granted, yay!
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
 // Life cycle
+    @SuppressLint("SourceLockedOrientationActivity")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate -> BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBLA");
 
-        setContentView(R.layout.activity_main_settings);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        context = getApplicationContext();
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
-            }
-//            return;
-        }
+        checkPermissions();
+
+        Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
+
+        setContentView(R.layout.activity_main_settings);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+//        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
+//            }
+////            return;
+//        }
+//
+//        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_READ_EXTERNAL_STORAGE);
+//            }
+//        }
+
 
         // INIT layout items
 //         initSwipeListener(this);
@@ -113,62 +188,97 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         initButtons();
         setupOrientationSpinner();
 
-
-        filters = new ArrayList<>();
-        filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_SERVICE_UUID)).build());
-        filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_MEASUREMENT_CHAR_UUID)).build());
-
-        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        if (bluetoothManager == null) throw new AssertionError("Object cannot be null");
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, "BLE Not Supported",
-                    Toast.LENGTH_SHORT).show();
-//            finish();
-        } else {
-            if (mBluetoothAdapter.isEnabled()) {
-                setTextFieldTexts(m_BtStatus, getResources().getString(R.string.bluetooth_enabled));
-                m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
-            }
-        }
-
         m_StopwatchStartAuto = findViewById(R.id.cbStartStopwatch);
-        m_ReloadBtImage = findViewById(R.id.imageBtRefresh);
+        m_ImageReloadBt = findViewById(R.id.imageBtRefresh);
+        m_ImageMapColorMode = findViewById(R.id.imageMapColorMode);
+        m_ImageMapOfflineMode = findViewById(R.id.imageMapOfflineMode);
+        m_ImageMapRouteDirection = findViewById(R.id.imageMapDirectionArrows);
 
+        if(!connected_and_send_data) {
+            filters = new ArrayList<>();
+            filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_SERVICE_UUID)).build());
+            filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(HEART_RATE_MEASUREMENT_CHAR_UUID)).build());
 
-        arrayDevices = new ArrayList<>();
-        for (BluetoothDevice pairedDevice : mBluetoothAdapter.getBondedDevices()) {
-            Log.e(TAG, "onCreate -> pairedDevice -> " + pairedDevice.getName());
-            arrayDevices.add(pairedDevice.getName());
+            final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            if (bluetoothManager == null) throw new AssertionError("Object cannot be null");
+            mBluetoothAdapter = bluetoothManager.getAdapter();
+
+            if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                Toast.makeText(this, "BLE Not Supported",
+                        Toast.LENGTH_SHORT).show();
+                //            finish();
+            }
+
+            for (BluetoothDevice alreadyConnectedDevice : bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)) {
+                Log.e(TAG, "onCreate -> getConnectedDevices -> " + alreadyConnectedDevice.getName());
+                arrayDevices.add(alreadyConnectedDevice);
+            }
+
+            for (BluetoothDevice bt : arrayDevices)
+                listArrayDevices.add(bt.getName());
+
+            adapterDevice = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    listArrayDevices
+            );
+            adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            m_SpinnerDevice.setAdapter(adapterDevice);
         }
-        adapterDevice = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_dropdown_item,
-                arrayDevices
-        );
-        adapterDevice.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        m_SpinnerDevice.setAdapter(adapterDevice);
-//        m_SpinnerDevice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parent) {
-//
-//            }
-//        });
+        else {
+            m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_connected_24px);
+            setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_send_data));
+
+        }
+
+        arrayMaps = new ArrayList<>();
+        File sdcard = Environment.getExternalStorageDirectory();
+        File path = new File(sdcard.getAbsolutePath()+File.separator+"kml"+File.separator);
+        if (!path.isDirectory()) {
+            path.mkdir();
+        }
+
+        if (path.exists()) {
+            Log.d(TAG, "onCreate -> path.exists() -> " + path.exists());
+
+            File[] list = path.listFiles();
+
+            for (File file : list) {
+                if (file.getName().endsWith(".kml")) {
+                    arrayMaps.add(file.getAbsoluteFile().toString());
+                    bKmlFileFound = true;
+                    Log.d(TAG, "onCreate -> set bKmlFileFound-> " + bKmlFileFound);
+
+                }
+            }
+            if (arrayMaps.isEmpty()) {
+                arrayMaps.add("Please add *kml file to SDCard/kml");
+            }
+            Collections.sort(arrayMaps);
+
+            adapterMaps = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    arrayMaps
+            );
+            adapterMaps.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            m_SpinnerMaps.setAdapter(adapterMaps);
+        }
 
 
         //  prepare shared data
         pref = getSharedPreferences("Heartrate_Monitor", 0);
+        connected_and_send_data = pref.getBoolean("connected_and_send_data", false);
         m_SpeedometerSwitch.setChecked(pref.getBoolean("ShowSpeed", false));
+        m_NavigatorSwitch.setChecked(pref.getBoolean("ShowNavigator", false));
         m_HeartrateSwitch.setChecked(pref.getBoolean("ShowHR", false));
         m_ClockSwitch.setChecked(pref.getBoolean("ShowClock", false));
         m_StopwatchSwitch.setChecked(pref.getBoolean("ShowStopwatch", false));
         m_StopwatchStartAuto.setChecked(pref.getBoolean("StartStopwatch", false));
         m_OrientationSpinner.setSelection(pref.getInt("BlackModeOrientation", 0));
+        m_MapColorMode.setChecked(pref.getBoolean("MapColorMode", false));
+        m_MapOfflineMode.setChecked(pref.getBoolean("MapOfflineMode", false));
+        m_MapDirectionArrows.setChecked(pref.getBoolean("MapDirectionArrows", false));
+
+
         if( adapterDevice.getPosition(pref.getString("LastDevice", "N/A")) != 0){
             m_SpinnerDevice.setSelection(adapterDevice.getPosition(pref.getString("LastDevice", "N/A") ));
         }
@@ -195,6 +305,12 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     protected void onResume() {
         super.onResume();
         Log.e(TAG, "onResume - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
+
+        if (mBluetoothAdapter.isEnabled() && !connected_and_send_data) {
+            setTextFieldTexts(m_BtStatus, getResources().getString(R.string.bluetooth_enabled));
+            m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
+            m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_refresh_24px);
+        }
 
         if (mHandler == null) {
             mHandler = new Handler();
@@ -228,12 +344,22 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         super.onDestroy();
         Log.e(TAG, "onDestroy - > BLBALBALBLABLALBLALBLABLALBLABLBLALBLBALBL");
 
-        if(m_HeartrateSwitch.isChecked()) {
-            disconnectGattServer(mGatt);
-            mGatt = null;
+        if( m_HeartrateSwitch.isChecked() ) {
 
-            unregister_receiver();
+            if(connected_and_send_data) {
+                connected_and_send_data = false;
 
+                disconnectGattServer(mGatt);
+                mGatt = null;
+
+                unregister_receiver();
+            }
+            else{
+                disconnectGattServer(mGatt);
+                mGatt = null;
+
+                unregister_receiver();
+            }
         }
 
         Thread[] threads = new Thread[Thread.activeCount()];
@@ -246,14 +372,21 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         }
         Log.d(TAG, "onDestroy -> threads interrupted -> ");
 
-
         editor = pref.edit();
+        editor.putBoolean("connected_and_send_data", connected_and_send_data);
         editor.putBoolean("ShowSpeed", m_SpeedometerSwitch.isChecked());
+        editor.putBoolean("ShowNavigator", m_NavigatorSwitch.isChecked());
         editor.putBoolean("ShowHR", m_HeartrateSwitch.isChecked());
         editor.putBoolean("ShowClock", m_ClockSwitch.isChecked());
         editor.putBoolean("ShowStopwatch", m_StopwatchSwitch.isChecked());
         editor.putBoolean("StartStopwatch", m_StopwatchStartAuto.isChecked());
-        editor.putString("LastDevice", m_SpinnerDevice.getSelectedItem().toString());
+        editor.putBoolean("MapColorMode", m_MapColorMode.isChecked());
+        editor.putBoolean("MapOfflineMode", m_MapOfflineMode.isChecked());
+        editor.putBoolean("MapDirectionArrows", m_MapDirectionArrows.isChecked());
+
+        if (m_SpinnerDevice.getSelectedItem() != null) {
+            editor.putString("LastDevice", m_SpinnerDevice.getSelectedItem().toString());
+        }
         editor.putInt("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
 
 // ignore the warning, because editor.apply() doesn't give me the correct preferences back on next application start
@@ -286,12 +419,34 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     }
 
     public void onClickReloadBt(View v) {
+        Log.d(TAG, "onClickReloadBt -> ");
+        Log.d(TAG, "onClickReloadBt -> "+ connected_and_send_data);
+        Log.d(TAG, "onClickReloadBt -> "+ arrayDevices.isEmpty());
 
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) && connected_and_send_data == false) {
-            m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_clear_24px);
+        if ( !connected_and_send_data && !arrayDevices.isEmpty() ) {
+            Log.d(TAG, "onClickReloadBt -> selected device -> ");
+
+            for (BluetoothDevice device : arrayDevices){
+                Log.d(TAG, "onClickReloadBt -> selected device -> " + device.getName());
+                Log.d(TAG, "onClickReloadBt -> selected device -> " + m_SpinnerDevice.getSelectedItem().toString());
+                if (device.getName().equals(m_SpinnerDevice.getSelectedItem().toString())) {
+                    Log.d(TAG, "onClickReloadBt -> selected device -> in if -> " + device.getName());
+                    connectToDevice(device);
+                }
+            }
+        }
+        else if ( getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE ) && !connected_and_send_data) {
+            Log.d(TAG, "onClickReloadBt -> startBTScan -> 1");
+
+            m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_clear_24px);
             startBTScan();
         }
-        else{
+        else if ( connected_and_send_data ) {
+            Log.d(TAG, "onClickReloadBt -> disconnect -> ");
+            if(!m_HeartrateSwitch.isChecked()) {
+                m_HeartrateSwitch.setChecked(true);
+            }
+
             if(m_HeartrateSwitch.isChecked()) {
                 connected_and_send_data = false;
 
@@ -300,11 +455,16 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
                 unregister_receiver();
 
-                m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
+                m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_refresh_24px);
 
             }
         }
+        else {
+            Log.d(TAG, "onClickReloadBt -> startBTScan -> 2");
 
+            m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_clear_24px);
+            startBTScan();
+        }
     }
 
 
@@ -343,11 +503,55 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
         m_ClockSwitch = findViewById(R.id.switchClock);
         m_StopwatchSwitch = findViewById(R.id.switchStopwatch);
         m_SpeedometerSwitch = findViewById(R.id.switchSpeedometer);
+        m_NavigatorSwitch = findViewById(R.id.switchNavigator);
+        m_NavigatorSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // do something, the isChecked will be
+                // true if the switch is in the On position
+                if(isChecked && !m_SpeedometerSwitch.isChecked()){
+                    m_SpeedometerSwitch.setChecked(true);
+                }
+            }
+        });
         m_HeartrateSwitch = findViewById(R.id.switchHeartrate);
+        m_MapColorMode = findViewById(R.id.switchMapColorMode);
+        m_MapColorMode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    m_ImageMapColorMode.setImageResource(R.drawable.ic_invert_colors_24px);
+                } else {
+                    m_ImageMapColorMode.setImageResource(R.drawable.ic_invert_colors_off_24px);
+                }
+            }
+        });
+        m_MapOfflineMode = findViewById(R.id.switchOfflineMap);
+        m_MapOfflineMode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    m_ImageMapOfflineMode.setImageResource(R.drawable.ic_cloud_off_24px);
+                } else {
+                    m_ImageMapOfflineMode.setImageResource(R.drawable.ic_cloud_queue_24px);
+                }
+            }
+        });
+        m_MapDirectionArrows = findViewById(R.id.switchMapDirectionArrows);
+        m_MapDirectionArrows.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    m_ImageMapRouteDirection.setImageResource(R.drawable.ic_route_direction_button_24px);
+                } else {
+                    m_ImageMapRouteDirection.setImageResource(R.drawable.ic_route_direction_off_button_24px);
+                }
+            }
+        });
     }
 
     private void initSpinner() {
         m_SpinnerDevice = findViewById(R.id.spinnerDevice);
+        m_SpinnerMaps = findViewById(R.id.spinnerMaps);
     }
 
     private void initTextViews() {
@@ -374,14 +578,25 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     }
 
     private void startBlackMode() {
-        Intent intentToStartBlackMode = new Intent(getApplicationContext(), BlackMode.class);
+        Intent intentToStartBlackMode = new Intent(this.getApplicationContext(), BlackMode.class);
 
         intentToStartBlackMode.putExtra("ShowSpeed", m_SpeedometerSwitch.isChecked());
+        intentToStartBlackMode.putExtra("ShowNavigator", m_NavigatorSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowHR", m_HeartrateSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowStopwatch", m_StopwatchSwitch.isChecked());
         intentToStartBlackMode.putExtra("ShowClock", m_ClockSwitch.isChecked());
         intentToStartBlackMode.putExtra("StartStopwatch", m_StopwatchStartAuto.isChecked());
+        intentToStartBlackMode.putExtra("MapDirectionArrows", m_MapDirectionArrows.isChecked());
+        intentToStartBlackMode.putExtra("MapColorMode", m_MapColorMode.isChecked());
+        intentToStartBlackMode.putExtra("MapOfflineMode", m_MapOfflineMode.isChecked());
+
         intentToStartBlackMode.putExtra("BlackModeOrientation", m_OrientationSpinner.getSelectedItemPosition());
+
+        if (bKmlFileFound) {
+            Log.e(TAG, "SelectedMaps ->  " + m_SpinnerMaps.getSelectedItemPosition());
+
+            intentToStartBlackMode.putExtra("SelectedMaps", arrayMaps.get(m_SpinnerMaps.getSelectedItemPosition()));
+        }
 
         startActivity(intentToStartBlackMode);
     }
@@ -415,7 +630,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_connected));
 //                setTextFieldTexts(m_BtDevice, device.getName());
 
-            m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_bluetooth_break_24px);
+            m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_bluetooth_break_24px);
 
             Log.e(TAG, "connectToDevice -> scanLeDevice -> false");
             scanLeDevice(false);// will stop after first device detection
@@ -431,14 +646,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private void startBTScan() {
         Log.e(TAG, "startBTScan -> call");
 
-        setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_for_devices));
-        m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_searching_24px);
 
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
         else {
+            setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_for_devices));
+            m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_searching_24px);
+
             if (Build.VERSION.SDK_INT >= 21) {
                 mLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
                 settings = new ScanSettings.Builder()
@@ -457,8 +673,18 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             mScanning = true;
             Log.e(TAG, "startBTScan-> Scan started");
         }
+    }
 
-
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Bluetooth not enabled.
+                finish();
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void scanLeDevice(final boolean enable) {
@@ -474,7 +700,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
                 mBluetoothAdapter.stopLeScan(mLeScanCallback);
             } else {
                 if(mLeScanner != null) {
-                    Log.e(TAG, "scanLeDevice 2-> stopScan");
+                    Log.e(TAG, "scanLeDevice 2 -> stopScan");
                     mLeScanner.stopScan(mScanCallback);
                 }
             }
@@ -498,7 +724,7 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
 
             if( !connected_and_send_data ){
                 setTextFieldTexts(m_BtData, getResources().getString(R.string.scan_stopped));
-                m_ReloadBtImage.setImageResource(R.drawable.ic_baseline_refresh_24px);
+                m_ImageReloadBt.setImageResource(R.drawable.ic_baseline_refresh_24px);
                 m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_enabled_24px);
             }
         }
@@ -515,20 +741,17 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
             Log.i(TAG, result.toString());
             BluetoothDevice btDevice = result.getDevice();
             Log.e(TAG, "onScanResult -> connectToDevice -> " + result.getDevice());
-            if( m_SpinnerDevice.getSelectedItem().toString().equals(result.getDevice().getName())) {
+            if( !arrayDevices.isEmpty() || !(listArrayDevices.contains(result.getDevice().getName())))
+            {
+                listArrayDevices.add(btDevice.getName());
+                arrayDevices.add(btDevice);
+                adapterDevice.notifyDataSetChanged();
+                setTextFieldTexts(m_BtStatus,getResources().getString(R.string.found_device));
+                mLeScanner.stopScan(mScanCallback);
+            }
 
-                Log.e(TAG, "onScanResult -> selection equal Scanresult -> " + result.getDevice());
-                connectToDevice(btDevice);
-            }
-            else{
-                if( !(arrayDevices.contains(result.getDevice().getName())))
-                {
-                    arrayDevices.add(result.getDevice().getName());
-                    adapterDevice.notifyDataSetChanged();
-                    setTextFieldTexts(m_BtStatus,getResources().getString(R.string.found_device));
-                    mLeScanner.stopScan(mScanCallback);
-                }
-            }
+            Log.e(TAG, "onScanResult -> selection equal Scanresult -> " + result.getDevice());
+            connectToDevice(btDevice);
 
         }
 
@@ -561,11 +784,15 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.e(TAG, "BroadcastReceiver -> onReceive");
 // ONLY for DEBUGGING
 //            if(intent.getAction().equals(ACTION_BROADCAST_RECEIVER)){
 //
 //                Log.d(TAG, String.format("ACTION_BROADCAST_RECEIVER_DATA: "+ intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA)));
-//                intent.putExtra(ACTION_BROADCAST_RECEIVER_DATA, intent.getAction().equals(ACTION_BROADCAST_RECEIVER_DATA));
+//                int heartRate = Integer.parseInt(intent.getStringExtra(ACTION_BROADCAST_RECEIVER_DATA));
+//                setHrData(heartRate);
+//
+////                intent.putExtra(ACTION_BROADCAST_RECEIVER_DATA, intent.getAction().equals(ACTION_BROADCAST_RECEIVER_DATA));
 //            }
         }
     };
@@ -599,16 +826,24 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     private Switch m_ClockSwitch;
     private Switch m_StopwatchSwitch;
     private Switch m_SpeedometerSwitch;
+    private Switch m_NavigatorSwitch;
+    private Switch m_MapDirectionArrows;
+    private Switch m_MapOfflineMode;
+    private Switch m_MapColorMode;
     private Switch m_HeartrateSwitch;
     private Spinner m_SpinnerDevice;
-    private ImageView m_ReloadBtImage;
+    private Spinner m_SpinnerMaps;
+    private ImageView m_ImageReloadBt;
     private ImageView m_ImageBtIcon;
-//    private TextView m_BtDevice;
+    private ImageView m_ImageMapOfflineMode;
+    private ImageView m_ImageMapRouteDirection;
+    private ImageView m_ImageMapColorMode;
+    //    private TextView m_BtDevice;
     private TextView m_BtStatus;
     private TextView m_BtData;
     private TextView m_GpsStatus;
 
-    private Boolean connected_and_send_data = false;
+
 
     // ---------------------------------------------------------------------------------------------
 
@@ -824,6 +1059,8 @@ public class MainSettingsActivity extends AppCompatActivity implements AdapterVi
     public void setHrData(int hrData) {
 
         m_ImageBtIcon.setImageResource(R.drawable.ic_baseline_bluetooth_connected_24px);
+        setTextFieldTexts(m_BtStatus, getResources().getString(R.string.device_send_data));
+
         runOnUiThread(() -> m_BtData.setText(String.format(Locale.getDefault(), "%d", hrData)));
     }
 

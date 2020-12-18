@@ -11,9 +11,9 @@
         android:id="@+id/linearLayout3"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/ClockView"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        android:baselineAligned="false">
 
         <LinearLayout
             android:id="@+id/NavigatorLayout"
@@ -79,7 +79,6 @@
                     android:padding="12dp"
                     android:visibility="visible"
                     app:srcCompat="@drawable/ic_cloud_download_24px" />
-
             </LinearLayout>
 
             <LinearLayout
