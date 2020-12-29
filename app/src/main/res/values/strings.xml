@@ -63,7 +63,7 @@
     <string name="rbVertivalOrientation">Vertical</string>
     <string name="rbRotationOrientation">Rotation</string>
     <string name="tBTDevice">BT Device</string>
-    <string name="tBTDeviceStatus">BT Status</string>
+    <string name="tBTDeviceStatus">Bluetooth disabled</string>
 
     <string name="ivBTRefreshDescription">BT Refresh Button Image</string>
     <string name="ivBTIconDescription">BT Status Image</string>
