@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bike Computer</string>
+    <string name="app_name">myHeartrate on Bike</string>
     <string name="ble_not_supported">Your device has no Bluetooth</string>
     <string name="label_data">Data:</string>
     <string name="label_device_address">Device address:</string>
@@ -58,7 +58,7 @@
     <string name="tSpeedometerView">kmh</string>
     <string name="tTimerView">00:00.00</string>
     <string name="tNavigatorView">Center Position</string>
-    <string name="bStartBlackMode">Start Black-Mode</string>
+    <string name="bStartBlackMode">Start</string>
     <string name="rbHorizontalOrientation">Horizontal</string>
     <string name="rbVertivalOrientation">Vertical</string>
     <string name="rbRotationOrientation">Rotation</string>
