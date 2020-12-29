@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/heartrate_monitor.iml" filepath="$PROJECT_DIR$/heartrate_monitor.iml" group="Heartrate_Monitor" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="Heartrate_Monitor/app" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Heartrate_Monitor.iml" filepath="$PROJECT_DIR$/.idea/modules/Heartrate_Monitor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Heartrate_Monitor.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Heartrate_Monitor.app.iml" />
     </modules>
   </component>
 </project>
