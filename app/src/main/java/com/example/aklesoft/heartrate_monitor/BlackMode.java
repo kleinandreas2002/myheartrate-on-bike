@@ -26,9 +26,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -36,6 +33,10 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -115,6 +116,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
     private boolean bLocationManager;
 
     private boolean bShowHR;
+    private boolean bShowSpeed;
     private boolean bShowNavigator;
     private boolean bMapColorMode;
     private boolean bMapOfflineMode;
@@ -173,7 +175,7 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
         boolean bStartStopwatch = getIntent().getExtras().getBoolean("StartStopwatch", false);
         Log.d(TAG, "BlackMode -> onCreate -> bStartStopwatch ->" + bStartStopwatch);
 
-        boolean bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
+        bShowSpeed = getIntent().getExtras().getBoolean("ShowSpeed", false);
         Log.d(TAG, "BlackMode -> onCreate -> bShowSpeed ->" + bShowSpeed);
 
         bShowNavigator = getIntent().getExtras().getBoolean("ShowNavigator", false);
@@ -311,17 +313,20 @@ public class BlackMode extends Activity implements GoogleApiClient.ConnectionCal
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-//                return;
+                return;
         }
-        Criteria criteria = new Criteria();
-        provider = locationManager.getBestProvider(criteria, true);
 
-        if (provider == null) {
-            Log.d(TAG, "No location provider found!");
-        } else {
-            locationManager.requestLocationUpdates(provider, 1, 0, this);
+        if (bShowSpeed) {
+            Criteria criteria = new Criteria();
+            provider = locationManager.getBestProvider(criteria, true);
 
-            currentGpsPosition = locationManager.getLastKnownLocation(provider);
+            if (provider == null) {
+                Log.d(TAG, "No location provider found!");
+            } else {
+                locationManager.requestLocationUpdates(provider, 1, 0, this);
+
+                currentGpsPosition = locationManager.getLastKnownLocation(provider);
+            }
         }
 
         if (bShowNavigator && sSelectedMap != null) {

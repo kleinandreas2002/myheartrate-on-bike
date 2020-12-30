@@ -3,8 +3,9 @@ package com.example.aklesoft.heartrate_monitor;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
-import android.support.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
