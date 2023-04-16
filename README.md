@@ -23,3 +23,4 @@ Navigation map * Follow your created KML route * To use map feature save a KML f
 	* Offline map
 
 
+![image](https://user-images.githubusercontent.com/34026772/232306719-d6d79039-ced4-40d9-b1cc-2a1ea6251159.png)
